@@ -12,6 +12,10 @@ externalPort = 80
 localPort = 8082
 externalPort = 3000
 
+[[ports]]
+localPort = 44815
+externalPort = 3001
+
 [workflows]
 runButton = "Project"
 
@@ -67,6 +71,7 @@ waitForPort = 8081
 
 [agent]
 stack = "EXPO"
+integrations = ["spotify:1.0.0"]
 
 [deployment]
 deploymentTarget = "static"

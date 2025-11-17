@@ -1,30 +1,40 @@
 import { Platform } from "react-native";
 
-const tintColorLight = "#007AFF";
-const tintColorDark = "#0A84FF";
+const spotifyGreen = "#1DB954";
+const spotifyGreenDark = "#1AA34A";
 
 export const Colors = {
   light: {
-    text: "#11181C",
+    text: "#191414",
     buttonText: "#FFFFFF",
     tabIconDefault: "#687076",
-    tabIconSelected: tintColorLight,
-    link: "#007AFF",
+    tabIconSelected: spotifyGreen,
+    link: spotifyGreen,
     backgroundRoot: "#FFFFFF", // Elevation 0
     backgroundDefault: "#F2F2F2", // Elevation 1
     backgroundSecondary: "#E6E6E6", // Elevation 2
     backgroundTertiary: "#D9D9D9", // Elevation 3
+    primary: spotifyGreen,
+    surface: "#F5F5F5",
+    textSecondary: "#666666",
+    success: spotifyGreen,
+    error: "#E22134",
   },
   dark: {
-    text: "#ECEDEE",
+    text: "#FFFFFF",
     buttonText: "#FFFFFF",
     tabIconDefault: "#9BA1A6",
-    tabIconSelected: tintColorDark,
-    link: "#0A84FF",
-    backgroundRoot: "#1F2123", // Elevation 0
-    backgroundDefault: "#2A2C2E", // Elevation 1
-    backgroundSecondary: "#353739", // Elevation 2
-    backgroundTertiary: "#404244", // Elevation 3
+    tabIconSelected: spotifyGreen,
+    link: spotifyGreen,
+    backgroundRoot: "#191414", // Elevation 0
+    backgroundDefault: "#282828", // Elevation 1
+    backgroundSecondary: "#121212", // Elevation 2
+    backgroundTertiary: "#1F1F1F", // Elevation 3
+    primary: spotifyGreen,
+    surface: "#282828",
+    textSecondary: "#B3B3B3",
+    success: spotifyGreen,
+    error: "#E22134",
   },
 };
 
