@@ -99,22 +99,22 @@ export async function handleSpotifyCallback(): Promise<boolean> {
   }
 
   try {
-    const response = await fetch('https://accounts.spotify.com/api/token', {
+    const backendUrl = typeof window !== 'undefined' ? window.location.origin : '';
+    const response = await fetch(`${backendUrl}/api/spotify/token`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'application/json',
       },
-      body: new URLSearchParams({
-        client_id: SPOTIFY_CLIENT_ID,
-        grant_type: 'authorization_code',
+      body: JSON.stringify({
         code,
-        redirect_uri: REDIRECT_URI,
         code_verifier: codeVerifier,
+        redirect_uri: REDIRECT_URI,
       }),
     });
 
     if (!response.ok) {
-      throw new Error('Failed to exchange code for token');
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to exchange code for token');
     }
 
     const data = await response.json();
