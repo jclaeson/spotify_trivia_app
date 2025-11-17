@@ -427,8 +427,41 @@ function createLandingPage(baseUrl) {
   console.log("Complete");
 }
 
+async function buildWebVersion() {
+  console.log("Building web version...");
+  
+  return new Promise((resolve, reject) => {
+    const webBuild = spawn("npx", ["expo", "export", "-p", "web"], {
+      stdio: "inherit",
+    });
+
+    webBuild.on("close", (code) => {
+      if (code === 0) {
+        console.log("Web build complete");
+        
+        const distFiles = fs.readdirSync("dist");
+        for (const file of distFiles) {
+          const src = path.join("dist", file);
+          const dest = path.join("static-build", file);
+          
+          if (fs.statSync(src).isDirectory()) {
+            fs.cpSync(src, dest, { recursive: true });
+          } else {
+            fs.copyFileSync(src, dest);
+          }
+        }
+        
+        console.log("Web files copied to static-build");
+        resolve();
+      } else {
+        reject(new Error(`Web build failed with code ${code}`));
+      }
+    });
+  });
+}
+
 async function main() {
-  console.log("Building static Expo Go deployment...");
+  console.log("Building static Expo deployment with web version...");
 
   setupSignalHandlers();
 
@@ -439,6 +472,9 @@ async function main() {
   clearMetroCache();
 
   await startMetro();
+  
+  await buildWebVersion();
+  
   const manifests = await downloadBundlesAndManifests(timestamp);
 
   console.log("Processing assets...");
@@ -459,11 +495,12 @@ async function main() {
     updateBundleUrls(timestamp, baseUrl);
   }
 
-  console.log("Updating manifests and creating landing page...");
+  console.log("Updating manifests...");
   updateManifests(manifests, timestamp, baseUrl, assetsByHash);
-  createLandingPage(baseUrl);
 
   console.log("Build complete! Deploy to:", baseUrl);
+  console.log("Web app will be served at the root URL");
+  console.log("Native manifests available at /ios and /android");
 
   if (metroProcess) {
     metroProcess.kill();

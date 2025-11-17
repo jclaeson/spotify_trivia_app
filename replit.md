@@ -9,6 +9,8 @@ An interactive music trivia game built with Expo React Native that challenges us
   - Added playlist search functionality allowing users to search by theme/keywords
   - Configured for web browser sharing with friends
   - Set up configurable preview duration in `constants/config.ts`
+  - Updated deployment to serve web version at root URL (not just QR code landing page)
+  - Modified build.js to export both web version and native manifests
 
 ## User Preferences
 - None specified yet
@@ -83,8 +85,16 @@ The app uses the Replit Spotify connector with the following permissions:
 - `user-read-recently-played`, `user-top-read`
 - `streaming`, `user-read-playback-state`
 
-### Web Sharing
-The app is fully playable in web browsers. Share the Expo web URL with friends to let them try the game. On web, the app fetches real Spotify data; on mobile (Expo Go), it uses mock data.
+### Web Deployment
+The app is fully playable in web browsers at the published URL. When you publish the app:
+- The web version is served at the root URL (e.g., https://yourapp.replit.app)
+- Native Expo Go manifests are available at /ios and /android for mobile scanning
+- The build process (scripts/build.js) automatically:
+  1. Exports the web version using `expo export -p web`
+  2. Builds native bundles for iOS and Android
+  3. Copies all files to the static-build directory for deployment
+
+On web, the app fetches real Spotify data via OAuth. On mobile (Expo Go), it uses mock data for testing.
 
 ### Development Notes
 - Hot Module Reloading (HMR) is enabled for rapid development
