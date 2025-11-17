@@ -99,7 +99,10 @@ export async function handleSpotifyCallback(): Promise<boolean> {
   }
 
   try {
-    const backendUrl = typeof window !== 'undefined' ? window.location.origin : '';
+    const isReplitDev = typeof window !== 'undefined' && window.location.hostname.includes('replit.dev');
+    const backendUrl = isReplitDev
+      ? `${window.location.protocol}//${window.location.hostname}:3000`
+      : (typeof window !== 'undefined' ? window.location.origin : '');
     const response = await fetch(`${backendUrl}/api/spotify/token`, {
       method: 'POST',
       headers: {
