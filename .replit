@@ -74,9 +74,9 @@ stack = "EXPO"
 integrations = ["spotify:1.0.0"]
 
 [deployment]
-deploymentTarget = "static"
-publicDir = "static-build"
+deploymentTarget = "cloudrun"
 build = ["node", "scripts/build.js"]
+run = ["sh", "-c", "npm start"]
 
 # Expo manifest headers
 [[deployment.responseHeaders]]
