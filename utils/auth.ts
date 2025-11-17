@@ -103,6 +103,14 @@ export async function handleSpotifyCallback(): Promise<boolean> {
     const backendUrl = isReplitDev
       ? `${window.location.protocol}//${window.location.hostname}:3000`
       : (typeof window !== 'undefined' ? window.location.origin : '');
+    
+    console.log('OAuth Debug:', {
+      isReplitDev,
+      hostname: window.location.hostname,
+      backendUrl,
+      endpoint: `${backendUrl}/api/spotify/token`
+    });
+    
     const response = await fetch(`${backendUrl}/api/spotify/token`, {
       method: 'POST',
       headers: {
