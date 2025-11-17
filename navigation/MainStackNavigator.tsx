@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { View, Image, StyleSheet } from "react-native";
+import { View, Image, StyleSheet, Platform } from "react-native";
 
 import LoginScreen from "@/screens/LoginScreen";
 import MenuScreen from "@/screens/MenuScreen";
@@ -13,7 +13,9 @@ import { getCommonScreenOptions } from "@/navigation/screenOptions";
 import { useTheme } from "@/hooks/useTheme";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { Spacing } from "@/constants/theme";
-import { QUESTION_COUNT } from "@/constants/config";
+import { QUESTION_COUNT, ANSWER_OPTIONS_COUNT } from "@/constants/config";
+import { checkSpotifyAuth, initiateSpotifyLogin } from "@/utils/auth";
+import { loadTracksForPlaylist, generateQuestion, Track, GameQuestion } from "@/utils/gameLogic";
 
 export type MainStackParamList = {
   Login: undefined;
@@ -39,48 +41,13 @@ interface RoundResult {
   artistName: string;
 }
 
-const MOCK_TRACKS = [
-  { id: "1", name: "Blinding Lights", artist: "The Weeknd" },
-  { id: "2", name: "Shape of You", artist: "Ed Sheeran" },
-  { id: "3", name: "Dance Monkey", artist: "Tones and I" },
-  { id: "4", name: "Someone Like You", artist: "Adele" },
-  { id: "5", name: "Uptown Funk", artist: "Mark Ronson ft. Bruno Mars" },
-  { id: "6", name: "Bohemian Rhapsody", artist: "Queen" },
-  { id: "7", name: "Hotel California", artist: "Eagles" },
-  { id: "8", name: "Smells Like Teen Spirit", artist: "Nirvana" },
-  { id: "9", name: "Billie Jean", artist: "Michael Jackson" },
-  { id: "10", name: "Wonderwall", artist: "Oasis" },
-  { id: "11", name: "Sweet Child O' Mine", artist: "Guns N' Roses" },
-  { id: "12", name: "Rolling in the Deep", artist: "Adele" },
-  { id: "13", name: "Thinking Out Loud", artist: "Ed Sheeran" },
-  { id: "14", name: "Shallow", artist: "Lady Gaga & Bradley Cooper" },
-  { id: "15", name: "Bad Guy", artist: "Billie Eilish" },
-];
-
-function generateQuestion(round: number): {
-  answers: Answer[];
-  correctAnswerId: string;
-} {
-  const shuffled = [...MOCK_TRACKS].sort(() => Math.random() - 0.5);
-  const selected = shuffled.slice(0, 4);
-  const correct = selected[0];
-
-  return {
-    answers: selected.map((track) => ({
-      id: track.id,
-      trackName: track.name,
-      artistName: track.artist,
-    })),
-    correctAnswerId: correct.id,
-  };
-}
-
 export default function MainStackNavigator() {
   const { theme } = useTheme();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [stats, setStats] = useState({
     gamesPlayed: 0,
     bestScore: 7,
@@ -88,60 +55,99 @@ export default function MainStackNavigator() {
     accuracy: 68,
   });
 
+  const [gameTracks, setGameTracks] = useState<Track[]>([]);
+  const [usedTrackIds, setUsedTrackIds] = useState<string[]>([]);
+  const [currentQuestion, setCurrentQuestion] = useState<GameQuestion | null>(null);
   const [gameState, setGameState] = useState({
     currentRound: 1,
     score: 0,
     results: [] as RoundResult[],
-    currentQuestion: generateQuestion(1),
-    isPlaying: false,
-    playbackProgress: 0,
   });
 
-  const handleLogin = () => {
-    setIsAuthenticated(true);
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    if (Platform.OS === 'web') {
+      const isAuth = await checkSpotifyAuth();
+      setIsAuthenticated(isAuth);
+    } else {
+      setIsAuthenticated(true);
+    }
+    setIsCheckingAuth(false);
+  };
+
+  const handleLogin = async () => {
+    if (Platform.OS === 'web') {
+      initiateSpotifyLogin();
+    } else {
+      setIsAuthenticated(true);
+    }
   };
 
   const handleLogout = () => {
     setIsAuthenticated(false);
   };
 
-  const handleStartGame = (playlistId: string) => {
+  const handleStartGame = async (playlistId: string, navigation: any) => {
+    const tracks = await loadTracksForPlaylist(playlistId);
+    
+    const minTracksNeeded = QUESTION_COUNT + ANSWER_OPTIONS_COUNT - 1;
+    if (tracks.length < minTracksNeeded) {
+      alert(`This playlist doesn't have enough tracks with audio previews. Need at least ${minTracksNeeded} tracks, found ${tracks.length}.`);
+      return;
+    }
+    
+    setGameTracks(tracks);
+    setUsedTrackIds([]);
+    
+    const firstQuestion = generateQuestion(tracks, []);
+    if (!firstQuestion) {
+      alert('Unable to generate questions from this playlist. Please try a different one.');
+      return;
+    }
+    
+    setCurrentQuestion(firstQuestion);
     setGameState({
       currentRound: 1,
       score: 0,
       results: [],
-      currentQuestion: generateQuestion(1),
-      isPlaying: false,
-      playbackProgress: 0,
     });
+    
+    navigation.navigate("GamePlay", { playlistId });
   };
 
   const handleAnswerSelected = (answerId: string) => {
-    const isCorrect = answerId === gameState.currentQuestion.correctAnswerId;
-    const correctAnswer = gameState.currentQuestion.answers.find(
-      (a) => a.id === gameState.currentQuestion.correctAnswerId
-    );
+    if (!currentQuestion) return;
+
+    const isCorrect = answerId === currentQuestion.correctAnswerId;
+    const correctAnswer = currentQuestion.correctTrack;
 
     const newResults = [
       ...gameState.results,
       {
         round: gameState.currentRound,
         correct: isCorrect,
-        trackName: correctAnswer?.trackName || "",
-        artistName: correctAnswer?.artistName || "",
+        trackName: correctAnswer?.name || "",
+        artistName: correctAnswer?.artist || "",
       },
     ];
 
     setTimeout(() => {
       if (gameState.currentRound < QUESTION_COUNT) {
-        setGameState({
-          currentRound: gameState.currentRound + 1,
-          score: isCorrect ? gameState.score + 1 : gameState.score,
-          results: newResults,
-          currentQuestion: generateQuestion(gameState.currentRound + 1),
-          isPlaying: false,
-          playbackProgress: 0,
-        });
+        const newUsedIds = [...usedTrackIds, currentQuestion.correctAnswerId];
+        setUsedTrackIds(newUsedIds);
+        
+        const nextQuestion = generateQuestion(gameTracks, newUsedIds);
+        if (nextQuestion) {
+          setCurrentQuestion(nextQuestion);
+          setGameState({
+            currentRound: gameState.currentRound + 1,
+            score: isCorrect ? gameState.score + 1 : gameState.score,
+            results: newResults,
+          });
+        }
       } else {
         const finalScore = isCorrect ? gameState.score + 1 : gameState.score;
         setGameState({
@@ -159,24 +165,16 @@ export default function MainStackNavigator() {
     }, 2000);
   };
 
-  const handleTogglePlay = () => {
-    setGameState({
-      ...gameState,
-      isPlaying: !gameState.isPlaying,
-    });
 
-    if (!gameState.isPlaying) {
-      const interval = setInterval(() => {
-        setGameState((prev) => {
-          if (prev.playbackProgress >= 100) {
-            clearInterval(interval);
-            return { ...prev, isPlaying: false, playbackProgress: 100 };
-          }
-          return { ...prev, playbackProgress: prev.playbackProgress + 2 };
-        });
-      }, 100);
-    }
-  };
+  if (isCheckingAuth) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.background }}>
+        <ThemedText type="body" style={{ color: theme.textSecondary }}>
+          Loading...
+        </ThemedText>
+      </View>
+    );
+  }
 
   return (
     <Stack.Navigator
@@ -226,8 +224,7 @@ export default function MainStackNavigator() {
             {({ navigation }) => (
               <GameSetupScreen
                 onSelectPlaylist={(playlistId) => {
-                  handleStartGame(playlistId);
-                  navigation.navigate("GamePlay", { playlistId });
+                  handleStartGame(playlistId, navigation);
                 }}
               />
             )}
@@ -236,12 +233,17 @@ export default function MainStackNavigator() {
             name="GamePlay"
             options={{ title: "Playing", headerBackVisible: false }}
           >
-            {({ navigation }) => (
+            {({ navigation }) => currentQuestion ? (
               <GamePlayScreen
                 currentRound={gameState.currentRound}
                 score={gameState.score}
-                answers={gameState.currentQuestion.answers}
-                correctAnswerId={gameState.currentQuestion.correctAnswerId}
+                answers={currentQuestion.options.map(track => ({
+                  id: track.id,
+                  trackName: track.name,
+                  artistName: track.artist,
+                }))}
+                correctAnswerId={currentQuestion.correctAnswerId}
+                currentTrack={currentQuestion.correctTrack}
                 onAnswerSelected={(answerId) => {
                   handleAnswerSelected(answerId);
                   if (gameState.currentRound >= QUESTION_COUNT) {
@@ -250,11 +252,8 @@ export default function MainStackNavigator() {
                     }, 2500);
                   }
                 }}
-                isPlaying={gameState.isPlaying}
-                onTogglePlay={handleTogglePlay}
-                playbackProgress={gameState.playbackProgress}
               />
-            )}
+            ) : null}
           </Stack.Screen>
           <Stack.Screen
             name="Results"

@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { StyleSheet, View, Pressable } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { Audio } from "expo-av";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -13,6 +14,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { PREVIEW_DURATION_MS, QUESTION_COUNT } from "@/constants/config";
+import { Track } from "@/utils/gameLogic";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -27,10 +29,8 @@ interface GamePlayScreenProps {
   score: number;
   answers: Answer[];
   correctAnswerId: string;
+  currentTrack: Track;
   onAnswerSelected: (answerId: string) => void;
-  isPlaying: boolean;
-  onTogglePlay: () => void;
-  playbackProgress: number;
 }
 
 export default function GamePlayScreen({
@@ -38,14 +38,103 @@ export default function GamePlayScreen({
   score,
   answers,
   correctAnswerId,
+  currentTrack,
   onAnswerSelected,
-  isPlaying,
-  onTogglePlay,
-  playbackProgress,
 }: GamePlayScreenProps) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [audioPlaying, setAudioPlaying] = useState(false);
+  const [audioProgress, setAudioProgress] = useState(0);
+  const soundRef = useRef<Audio.Sound | null>(null);
+
+  useEffect(() => {
+    setSelectedAnswer(null);
+    setAudioPlaying(false);
+    setAudioProgress(0);
+    loadAudio();
+    
+    return () => {
+      cleanupAudio();
+    };
+  }, [currentTrack]);
+
+  useEffect(() => {
+    if (selectedAnswer) {
+      cleanupAudio();
+    }
+  }, [selectedAnswer]);
+
+  const loadAudio = async () => {
+    await cleanupAudio();
+    
+    try {
+      await Audio.setAudioModeAsync({
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: false,
+      });
+
+      if (currentTrack.previewUrl && currentTrack.previewUrl !== 'mock') {
+        const { sound } = await Audio.Sound.createAsync(
+          { uri: currentTrack.previewUrl },
+          { shouldPlay: false }
+        );
+        soundRef.current = sound;
+
+        sound.setOnPlaybackStatusUpdate((status) => {
+          if (status.isLoaded) {
+            const progress = (status.positionMillis / PREVIEW_DURATION_MS) * 100;
+            setAudioProgress(Math.min(progress, 100));
+
+            if (status.positionMillis >= PREVIEW_DURATION_MS) {
+              sound.pauseAsync();
+              setAudioPlaying(false);
+            }
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error loading audio:', error);
+    }
+  };
+
+  const cleanupAudio = async () => {
+    if (soundRef.current) {
+      try {
+        await soundRef.current.unloadAsync();
+      } catch (error) {
+        console.error('Error unloading audio:', error);
+      }
+      soundRef.current = null;
+    }
+  };
+
+  const handleToggleAudio = async () => {
+    if (currentTrack.previewUrl === 'mock') {
+      return;
+    }
+    
+    if (!soundRef.current || !currentTrack.previewUrl) {
+      return;
+    }
+
+    try {
+      if (audioPlaying) {
+        await soundRef.current.pauseAsync();
+        setAudioPlaying(false);
+      } else {
+        const status = await soundRef.current.getStatusAsync();
+        if (status.isLoaded && status.positionMillis >= PREVIEW_DURATION_MS) {
+          await soundRef.current.setPositionAsync(0);
+          setAudioProgress(0);
+        }
+        await soundRef.current.playAsync();
+        setAudioPlaying(true);
+      }
+    } catch (error) {
+      console.error('Error toggling audio:', error);
+    }
+  };
 
   const handleAnswerPress = (answerId: string) => {
     if (!selectedAnswer) {
@@ -100,41 +189,54 @@ export default function GamePlayScreen({
 
       <View style={styles.playerContainer}>
         <Pressable
-          onPress={onTogglePlay}
+          onPress={handleToggleAudio}
           style={[
             styles.playButton,
             {
-              backgroundColor: theme.primary,
+              backgroundColor: (currentTrack.previewUrl && currentTrack.previewUrl !== 'mock') ? theme.primary : theme.backgroundDefault,
               shadowColor: "#000",
             },
           ]}
+          disabled={!currentTrack.previewUrl || currentTrack.previewUrl === 'mock'}
         >
           <Feather
-            name={isPlaying ? "pause" : "play"}
+            name={audioPlaying ? "pause" : "play"}
             size={32}
-            color="#FFFFFF"
+            color={(currentTrack.previewUrl && currentTrack.previewUrl !== 'mock') ? "#FFFFFF" : theme.textSecondary}
           />
         </Pressable>
         <View style={styles.progressInfo}>
-          <View
-            style={[
-              styles.waveform,
-              { backgroundColor: theme.backgroundDefault },
-            ]}
-          >
-            <View
-              style={[
-                styles.waveformFill,
-                {
-                  backgroundColor: theme.primary,
-                  width: `${playbackProgress}%`,
-                },
-              ]}
-            />
-          </View>
-          <ThemedText type="small" style={{ color: theme.textSecondary }}>
-            {Math.floor((playbackProgress / 100) * (PREVIEW_DURATION_MS / 1000))}s / {PREVIEW_DURATION_MS / 1000}s
-          </ThemedText>
+          {currentTrack.previewUrl === 'mock' ? (
+            <ThemedText type="small" style={{ color: theme.textSecondary }}>
+              Audio preview not available
+            </ThemedText>
+          ) : currentTrack.previewUrl ? (
+            <>
+              <View
+                style={[
+                  styles.waveform,
+                  { backgroundColor: theme.backgroundDefault },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.waveformFill,
+                    {
+                      backgroundColor: theme.primary,
+                      width: `${audioProgress}%`,
+                    },
+                  ]}
+                />
+              </View>
+              <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                {Math.floor((audioProgress / 100) * (PREVIEW_DURATION_MS / 1000))}s / {PREVIEW_DURATION_MS / 1000}s
+              </ThemedText>
+            </>
+          ) : (
+            <ThemedText type="small" style={{ color: theme.textSecondary }}>
+              No preview available for this track
+            </ThemedText>
+          )}
         </View>
       </View>
 
