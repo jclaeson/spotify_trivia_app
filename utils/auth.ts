@@ -99,15 +99,11 @@ export async function handleSpotifyCallback(): Promise<boolean> {
   }
 
   try {
-    const isReplitDev = typeof window !== 'undefined' && window.location.hostname.includes('replit.dev');
-    const backendUrl = isReplitDev
-      ? `${window.location.protocol}//${window.location.hostname}:3000`
-      : (typeof window !== 'undefined' ? window.location.origin : '');
+    const backendUrl = typeof window !== 'undefined' ? window.location.origin : '';
     
     console.log('OAuth Debug:', {
-      isReplitDev,
       hostname: window.location.hostname,
-      backendUrl,
+      origin: window.location.origin,
       endpoint: `${backendUrl}/api/spotify/token`
     });
     

@@ -10,7 +10,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const PORT = process.env.PORT || 8082;
+const PORT = process.env.PORT || 8081;
 const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID || '04246e81b0fa44278bfd1821ad90204a';
 const EXPO_DEV_SERVER = 'http://localhost:8082';
 const isDevelopment = !fs.existsSync(path.join(__dirname, 'static-build'));
@@ -113,8 +113,23 @@ app.post('/api/spotify/refresh', async (req, res) => {
 });
 
 if (isDevelopment) {
-  console.log('Development mode: No static files to serve');
-  console.log('API endpoints are available, but frontend should be accessed via Expo dev server');
+  console.log('Development mode: Proxying non-API requests to Expo dev server');
+  
+  app.use('/', (req, res, next) => {
+    if (req.path.startsWith('/api/')) {
+      next();
+    } else {
+      createProxyMiddleware({
+        target: EXPO_DEV_SERVER,
+        changeOrigin: true,
+        ws: true,
+        onError: (err, req, res) => {
+          console.error('Proxy error:', err.message);
+          res.status(502).json({ error: 'Expo dev server not available' });
+        }
+      })(req, res, next);
+    }
+  });
 } else {
   console.log('Production mode: Serving static files');
   
