@@ -11,6 +11,12 @@ An interactive music trivia game built with Expo React Native that challenges us
   - Set up configurable preview duration in `constants/config.ts`
   - Updated deployment to serve web version at root URL (not just QR code landing page)
   - Modified build.js to export both web version and native manifests
+  - **Added Express backend proxy server** (server.js) to handle Spotify OAuth token exchange
+    - Runs on port 8082 (external port 3000)
+    - Provides /api/spotify/token endpoint to exchange authorization codes for tokens
+    - Provides /api/spotify/refresh endpoint to refresh expired tokens
+    - Bypasses CORS restrictions for client-side OAuth
+    - Updated auth.ts to call backend proxy at `https://<hostname>:3000/api/spotify/token`
 
 ## User Preferences
 - None specified yet
@@ -56,10 +62,12 @@ An interactive music trivia game built with Expo React Native that challenges us
 │   ├── ScreenScrollView.tsx      # Safe area scroll view
 │   └── ErrorBoundary.tsx         # App crash handler
 ├── utils/
+│   ├── auth.ts                   # OAuth flow with backend proxy
 │   └── spotify.ts                # Spotify API integration
 ├── constants/
 │   ├── config.ts                 # Game configuration
 │   └── theme.ts                  # Design tokens
+├── server.js                     # Express backend for OAuth proxy
 └── App.tsx                       # Root component
 ```
 
@@ -85,6 +93,16 @@ The app uses the Replit Spotify connector with the following permissions:
 - `user-read-recently-played`, `user-top-read`
 - `streaming`, `user-read-playback-state`
 
+#### OAuth Backend Proxy
+To bypass CORS restrictions, the app uses an Express backend proxy:
+- **Development**: Backend runs on port 8082 (external port 3000)
+- **Production**: Backend serves static files and handles OAuth on port 8081
+- Frontend calls `https://<hostname>:3000/api/spotify/token` in development
+- Backend exchanges authorization codes for access/refresh tokens using PKCE
+- Spotify redirect URIs configured:
+  - Dev: `https://0e0cc435-9544-4e60-913d-c4cfb4d104ae-00-1lauom5e6qo4b.riker.replit.dev/callback`
+  - Prod: `https://spotify-trivia-jclaeson.replit.app/callback`
+
 ### Web Deployment
 The app is fully playable in web browsers at the published URL. When you publish the app:
 - The web version is served at the root URL (e.g., https://yourapp.replit.app)
@@ -100,6 +118,10 @@ On web, the app fetches real Spotify data via OAuth. On mobile (Expo Go), it use
 - Hot Module Reloading (HMR) is enabled for rapid development
 - Use QR code from Replit URL bar to test on physical devices via Expo Go
 - Web version accessible at the provided localhost URL during development
+- **Backend server must be running** for OAuth to work:
+  - Start manually: `PORT=8082 node server.js`
+  - Or use `bash start-dev.sh` to start both Expo and backend servers
+- Expo runs on port 8081, backend on port 8082 (external :3000)
 
 ### Known Limitations
 - Audio preview playback is simulated (no actual Spotify audio in prototype)

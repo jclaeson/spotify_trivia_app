@@ -10,10 +10,20 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 8082;
 const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID || '04246e81b0fa44278bfd1821ad90204a';
 const EXPO_DEV_SERVER = 'http://localhost:8082';
 const isDevelopment = !fs.existsSync(path.join(__dirname, 'static-build'));
+
+const ALLOWED_REDIRECT_URIS = [
+  process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}/callback` : null,
+  'https://spotify-trivia-jclaeson.replit.app/callback',
+  'http://localhost:8081/callback',
+].filter(Boolean);
+
+function validateRedirectUri(uri) {
+  return ALLOWED_REDIRECT_URIS.includes(uri);
+}
 
 app.post('/api/spotify/token', async (req, res) => {
   const { code, code_verifier, redirect_uri } = req.body;
@@ -21,6 +31,13 @@ app.post('/api/spotify/token', async (req, res) => {
   if (!code || !code_verifier || !redirect_uri) {
     return res.status(400).json({ 
       error: 'Missing required parameters: code, code_verifier, or redirect_uri' 
+    });
+  }
+
+  if (!validateRedirectUri(redirect_uri)) {
+    console.error('Invalid redirect_uri attempted:', redirect_uri);
+    return res.status(400).json({ 
+      error: 'Invalid redirect_uri' 
     });
   }
 
