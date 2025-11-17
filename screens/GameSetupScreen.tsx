@@ -1,5 +1,5 @@
-import React from "react";
-import { StyleSheet, View, Pressable } from "react-native";
+import React, { useState, useEffect } from "react";
+import { StyleSheet, View, Pressable, TextInput, ActivityIndicator, Platform } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import Animated, {
   useAnimatedStyle,
@@ -11,7 +11,8 @@ import { ScreenScrollView } from "@/components/ScreenScrollView";
 import { ThemedText } from "@/components/ThemedText";
 import { Card } from "@/components/Card";
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing } from "@/constants/theme";
+import { Spacing, BorderRadius } from "@/constants/theme";
+import { getUserPlaylists, searchPlaylists } from "@/utils/spotify";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -20,6 +21,8 @@ interface PlaylistOption {
   name: string;
   trackCount: number;
   isRecommended?: boolean;
+  imageUrl?: string;
+  owner?: string;
 }
 
 interface GameSetupScreenProps {
@@ -38,23 +41,131 @@ export default function GameSetupScreen({
   onSelectPlaylist,
 }: GameSetupScreenProps) {
   const { theme } = useTheme();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const [userPlaylists, setUserPlaylists] = useState<PlaylistOption[]>([]);
+  const [searchResults, setSearchResults] = useState<PlaylistOption[]>([]);
+  const [isLoadingPlaylists, setIsLoadingPlaylists] = useState(true);
+
+  useEffect(() => {
+    loadUserPlaylists();
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery.trim()) {
+        performSearch();
+      } else {
+        setSearchResults([]);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const loadUserPlaylists = async () => {
+    setIsLoadingPlaylists(true);
+    try {
+      if (Platform.OS === 'web') {
+        const playlists = await getUserPlaylists();
+        if (playlists.length > 0) {
+          setUserPlaylists(playlists);
+        } else {
+          setUserPlaylists(MOCK_PLAYLISTS);
+        }
+      } else {
+        setUserPlaylists(MOCK_PLAYLISTS);
+      }
+    } catch (error) {
+      console.error('Failed to load playlists:', error);
+      setUserPlaylists(MOCK_PLAYLISTS);
+    } finally {
+      setIsLoadingPlaylists(false);
+    }
+  };
+
+  const performSearch = async () => {
+    setIsSearching(true);
+    try {
+      if (Platform.OS === 'web') {
+        const results = await searchPlaylists(searchQuery);
+        setSearchResults(results);
+      } else {
+        const mockResults = MOCK_PLAYLISTS.filter(p =>
+          p.name.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        setSearchResults(mockResults);
+      }
+    } catch (error) {
+      console.error('Search failed:', error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const displayedPlaylists = searchQuery.trim() ? searchResults : userPlaylists;
 
   return (
     <ScreenScrollView contentContainerStyle={styles.container}>
       <ThemedText type="h3" style={styles.header}>
         Choose Your Music Source
       </ThemedText>
-      <ThemedText type="small" style={[styles.description, { color: theme.textSecondary }]}>
-        Select a playlist to generate quiz questions
-      </ThemedText>
 
-      {MOCK_PLAYLISTS.map((playlist) => (
-        <PlaylistCard
-          key={playlist.id}
-          playlist={playlist}
-          onPress={() => onSelectPlaylist(playlist.id)}
+      <View style={[styles.searchContainer, { backgroundColor: theme.backgroundDefault }]}>
+        <Feather name="search" size={20} color={theme.textSecondary} />
+        <TextInput
+          style={[styles.searchInput, { color: theme.text }]}
+          placeholder="Search playlists by theme..."
+          placeholderTextColor={theme.textSecondary}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
         />
-      ))}
+        {isSearching ? (
+          <ActivityIndicator size="small" color={theme.primary} />
+        ) : searchQuery ? (
+          <Pressable onPress={() => setSearchQuery("")}>
+            <Feather name="x" size={20} color={theme.textSecondary} />
+          </Pressable>
+        ) : null}
+      </View>
+
+      {searchQuery.trim() ? (
+        <ThemedText type="small" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+          Search Results
+        </ThemedText>
+      ) : (
+        <ThemedText type="small" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+          {Platform.OS === 'web' ? 'Your Playlists' : 'Sample Playlists'}
+        </ThemedText>
+      )}
+
+      {isLoadingPlaylists ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.primary} />
+          <ThemedText type="small" style={{ color: theme.textSecondary, marginTop: Spacing.md }}>
+            Loading playlists...
+          </ThemedText>
+        </View>
+      ) : displayedPlaylists.length > 0 ? (
+        displayedPlaylists.map((playlist) => (
+          <PlaylistCard
+            key={playlist.id}
+            playlist={playlist}
+            onPress={() => onSelectPlaylist(playlist.id)}
+          />
+        ))
+      ) : (
+        <View style={styles.emptyContainer}>
+          <Feather name="music" size={48} color={theme.textSecondary} />
+          <ThemedText type="body" style={{ color: theme.textSecondary, marginTop: Spacing.md }}>
+            No playlists found
+          </ThemedText>
+          <ThemedText type="small" style={{ color: theme.textSecondary, marginTop: Spacing.xs }}>
+            Try a different search term
+          </ThemedText>
+        </View>
+      )}
     </ScreenScrollView>
   );
 }
@@ -130,8 +241,33 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: Spacing.sm,
   },
-  description: {
-    marginBottom: Spacing["2xl"],
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.lg,
+    gap: Spacing.sm,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    paddingVertical: Spacing.sm,
+  },
+  sectionTitle: {
+    marginBottom: Spacing.md,
+    fontWeight: "600",
+  },
+  loadingContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing["5xl"],
+  },
+  emptyContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing["5xl"],
   },
   playlistCard: {
     marginBottom: Spacing.md,
