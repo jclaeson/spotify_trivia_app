@@ -14,7 +14,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { Spacing } from "@/constants/theme";
 import { QUESTION_COUNT, ANSWER_OPTIONS_COUNT } from "@/constants/config";
-import { checkSpotifyAuth, initiateSpotifyLogin } from "@/utils/auth";
+import { checkSpotifyAuth, initiateSpotifyLogin, handleSpotifyCallback } from "@/utils/auth";
 import { loadTracksForPlaylist, generateQuestion, Track, GameQuestion } from "@/utils/gameLogic";
 
 export type MainStackParamList = {
@@ -70,6 +70,15 @@ export default function MainStackNavigator() {
 
   const checkAuth = async () => {
     if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.location.pathname === '/callback') {
+        const success = await handleSpotifyCallback();
+        if (success) {
+          setIsAuthenticated(true);
+          setIsCheckingAuth(false);
+          return;
+        }
+      }
+      
       const isAuth = await checkSpotifyAuth();
       setIsAuthenticated(isAuth);
     } else {
@@ -168,7 +177,7 @@ export default function MainStackNavigator() {
 
   if (isCheckingAuth) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.background }}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.backgroundRoot }}>
         <ThemedText type="body" style={{ color: theme.textSecondary }}>
           Loading...
         </ThemedText>
