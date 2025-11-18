@@ -10,9 +10,9 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const PORT = process.env.PORT || 8081;
+const PORT = process.env.PORT || 8082;
 const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID || '04246e81b0fa44278bfd1821ad90204a';
-const EXPO_DEV_SERVER = 'http://localhost:8082';
+const EXPO_DEV_SERVER = 'http://localhost:8081';
 const isDevelopment = !fs.existsSync(path.join(__dirname, 'static-build'));
 
 const ALLOWED_REDIRECT_URIS = [

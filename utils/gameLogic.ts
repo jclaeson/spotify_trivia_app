@@ -62,19 +62,19 @@ export async function loadTracksForPlaylist(playlistId: string, hasPremium: bool
       }
 
       if (hasPremium) {
-        if (fetchedTracks.length >= ANSWER_OPTIONS_COUNT) {
+        if (fetchedTracks.length > 0) {
           console.log(`Premium user: Using ${fetchedTracks.length} tracks (no preview URL required)`);
           return fetchedTracks;
         }
       } else {
         const tracksWithPreview = fetchedTracks.filter(track => track.previewUrl !== null);
         
-        if (tracksWithPreview.length >= ANSWER_OPTIONS_COUNT) {
+        if (tracksWithPreview.length > 0) {
           console.log(`Free user: Using ${tracksWithPreview.length} tracks with preview URLs`);
           return tracksWithPreview;
         }
         
-        console.warn(`Only ${tracksWithPreview.length} tracks with previews found, using mock data`);
+        console.warn(`No tracks with previews found, using mock data`);
       }
     }
   } catch (error) {

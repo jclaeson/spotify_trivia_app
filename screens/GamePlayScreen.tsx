@@ -53,6 +53,9 @@ export default function GamePlayScreen({
   const soundRef = useRef<Audio.Sound | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const trackDurationRef = useRef<number>(PREVIEW_DURATION_MS);
+  const lastPositionRef = useRef<number>(0);
+  const idleTicksRef = useRef<number>(0);
+  const nullStateTicksRef = useRef<number>(0);
 
   useEffect(() => {
     const initPlayer = async () => {
@@ -86,8 +89,9 @@ export default function GamePlayScreen({
     setSelectedAnswer(null);
     setAudioPlaying(false);
     setAudioProgress(0);
-    trackDurationRef.current = PREVIEW_DURATION_MS;
-    setTrackDuration(PREVIEW_DURATION_MS);
+    const fallbackDuration = usePremiumPlayback ? 180000 : PREVIEW_DURATION_MS;
+    trackDurationRef.current = fallbackDuration;
+    setTrackDuration(fallbackDuration);
     loadAudio();
     
     return () => {
@@ -170,30 +174,97 @@ export default function GamePlayScreen({
     if (progressIntervalRef.current) {
       clearInterval(progressIntervalRef.current);
     }
+    
+    lastPositionRef.current = 0;
+    idleTicksRef.current = 0;
+    nullStateTicksRef.current = 0;
 
     progressIntervalRef.current = setInterval(async () => {
       const state = await SpotifyPlayer.getCurrentPlaybackState();
       if (state) {
-        const actualDuration = state.duration > 0 ? state.duration : trackDurationRef.current;
+        nullStateTicksRef.current = 0;
+        
+        if (lastPositionRef.current === 0 && state.position > 0) {
+          lastPositionRef.current = state.position;
+        }
+        
+        const activeDuration = trackDurationRef.current;
         
         if (state.duration > 0) {
           trackDurationRef.current = state.duration;
           setTrackDuration(state.duration);
-        }
-        
-        const progress = (state.position / actualDuration) * 100;
-        setAudioProgress(Math.min(progress, 100));
-
-        if (state.position >= actualDuration) {
-          await SpotifyPlayer.pausePlayback();
-          setAudioPlaying(false);
-          if (progressIntervalRef.current) {
-            clearInterval(progressIntervalRef.current);
+          
+          const progress = (state.position / state.duration) * 100;
+          setAudioProgress(Math.min(progress, 100));
+          
+          if (state.position >= state.duration || state.paused) {
+            if (!state.paused && state.position >= state.duration) {
+              await SpotifyPlayer.pausePlayback();
+            }
+            setAudioPlaying(false);
+            if (progressIntervalRef.current) {
+              clearInterval(progressIntervalRef.current);
+              progressIntervalRef.current = null;
+            }
+          } else {
+            if (Math.abs(state.position - lastPositionRef.current) < 50) {
+              idleTicksRef.current++;
+              if (idleTicksRef.current >= 30) {
+                console.warn('Premium playback frozen (duration known but position not advancing)');
+                await SpotifyPlayer.pausePlayback();
+                setAudioPlaying(false);
+                if (progressIntervalRef.current) {
+                  clearInterval(progressIntervalRef.current);
+                  progressIntervalRef.current = null;
+                }
+              }
+            } else {
+              idleTicksRef.current = 0;
+              lastPositionRef.current = state.position;
+            }
+          }
+        } else {
+          const progress = (state.position / activeDuration) * 100;
+          setAudioProgress(Math.min(progress, 100));
+          
+          if (state.paused) {
+            console.warn('Premium playback ended without SDK reporting duration');
+            setAudioPlaying(false);
+            if (progressIntervalRef.current) {
+              clearInterval(progressIntervalRef.current);
+              progressIntervalRef.current = null;
+            }
+          } else {
+            if (Math.abs(state.position - lastPositionRef.current) < 50) {
+              idleTicksRef.current++;
+              if (idleTicksRef.current >= 30) {
+                console.warn('Premium playback timeout: position not advancing (SDK never reported duration)');
+                await SpotifyPlayer.pausePlayback();
+                setAudioPlaying(false);
+                if (progressIntervalRef.current) {
+                  clearInterval(progressIntervalRef.current);
+                  progressIntervalRef.current = null;
+                }
+              }
+            } else {
+              idleTicksRef.current = 0;
+              lastPositionRef.current = state.position;
+            }
           }
         }
 
         if (state.paused && audioPlaying) {
           setAudioPlaying(false);
+        }
+      } else {
+        nullStateTicksRef.current++;
+        if (nullStateTicksRef.current >= 20) {
+          console.warn('Premium playback cleanup: SDK stopped reporting state');
+          setAudioPlaying(false);
+          if (progressIntervalRef.current) {
+            clearInterval(progressIntervalRef.current);
+            progressIntervalRef.current = null;
+          }
         }
       }
     }, 100);
