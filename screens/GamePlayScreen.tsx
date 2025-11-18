@@ -22,8 +22,6 @@ import {
   pausePlayback,
   resumePlayback,
   getCurrentPlaybackState,
-  addPlayerListener,
-  removePlayerListener,
 } from "@/utils/spotifyPlayer";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -58,13 +56,15 @@ export default function GamePlayScreen({
   const [audioProgress, setAudioProgress] = useState(0);
   const [hasPremium, setHasPremium] = useState(false);
   const soundRef = useRef<Audio.Sound | null>(null);
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const playbackStartTimeRef = useRef<number>(0);
 
   useEffect(() => {
     if (Platform.OS === 'web') {
-      checkPremiumStatus().then(async (isPremium) => {
+      checkPremiumStatus().then((isPremium) => {
         setHasPremium(isPremium);
         if (isPremium) {
-          await initializePlayer();
+          initializePlayer();
         }
       });
     }
@@ -79,7 +79,7 @@ export default function GamePlayScreen({
     return () => {
       cleanupAudio();
     };
-  }, [currentTrack, hasPremium]);
+  }, [currentTrack]);
 
   useEffect(() => {
     if (selectedAnswer) {
@@ -87,26 +87,11 @@ export default function GamePlayScreen({
     }
   }, [selectedAnswer]);
 
-  const handlePlayerStateChange = async (state: any) => {
-    if (!state) return;
-    
-    const progress = Math.min((state.position / PREVIEW_DURATION_MS) * 100, 100);
-    setAudioProgress(progress);
-    setAudioPlaying(!state.paused);
-
-    if (state.position >= PREVIEW_DURATION_MS && !state.paused) {
-      await pausePlayback();
-      setAudioPlaying(false);
-    }
-  };
-
   const loadAudio = async () => {
     await cleanupAudio();
     
     try {
-      if (hasPremium && Platform.OS === 'web') {
-        addPlayerListener('player_state_changed', handlePlayerStateChange);
-      } else {
+      if (!hasPremium) {
         await Audio.setAudioModeAsync({
           playsInSilentModeIOS: true,
           staysActiveInBackground: false,
@@ -138,8 +123,12 @@ export default function GamePlayScreen({
   };
 
   const cleanupAudio = async () => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+
     if (hasPremium && Platform.OS === 'web') {
-      removePlayerListener('player_state_changed', handlePlayerStateChange);
       try {
         await pausePlayback();
       } catch (error) {
@@ -157,24 +146,45 @@ export default function GamePlayScreen({
     }
   };
 
+  const startPremiumProgressTracking = () => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+    }
+
+    playbackStartTimeRef.current = Date.now();
+
+    progressIntervalRef.current = setInterval(async () => {
+      const elapsed = Date.now() - playbackStartTimeRef.current;
+      const progress = Math.min((elapsed / PREVIEW_DURATION_MS) * 100, 100);
+      setAudioProgress(progress);
+
+      if (elapsed >= PREVIEW_DURATION_MS) {
+        await pausePlayback();
+        setAudioPlaying(false);
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current);
+          progressIntervalRef.current = null;
+        }
+      }
+    }, 100);
+  };
+
   const handleToggleAudio = async () => {
     try {
       if (hasPremium && Platform.OS === 'web') {
-        await initializePlayer();
-        
-        const state = await getCurrentPlaybackState();
-        
         if (audioPlaying) {
           await pausePlayback();
+          setAudioPlaying(false);
+          if (progressIntervalRef.current) {
+            clearInterval(progressIntervalRef.current);
+            progressIntervalRef.current = null;
+          }
         } else {
-          if (!state || state.position >= PREVIEW_DURATION_MS) {
-            const success = await playTrack(`spotify:track:${currentTrack.id}`, 0);
-            if (!success) {
-              console.error('Failed to start Premium playback');
-              return;
-            }
-          } else {
-            await resumePlayback();
+          const trackUri = `spotify:track:${currentTrack.id}`;
+          const success = await playTrack(trackUri, 0);
+          if (success) {
+            setAudioPlaying(true);
+            startPremiumProgressTracking();
           }
         }
       } else {
