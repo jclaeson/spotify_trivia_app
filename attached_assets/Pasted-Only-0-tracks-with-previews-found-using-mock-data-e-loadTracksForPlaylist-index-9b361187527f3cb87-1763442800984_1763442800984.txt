@@ -1,0 +1,33 @@
+Only 0 tracks with previews found, using mock data
+e.loadTracksForPlaylist @ index-9b361187527f3cb87339362a2363a3a4.js:1233
+await in e.loadTracksForPlaylist
+V @ index-9b361187527f3cb87339362a2363a3a4.js:989
+onSelectPlaylist @ index-9b361187527f3cb87339362a2363a3a4.js:989
+onPress @ index-9b361187527f3cb87339362a2363a3a4.js:1165
+onClick @ index-9b361187527f3cb87339362a2363a3a4.js:972
+ef @ index-9b361187527f3cb87339362a2363a3a4.js:49
+(anonymous) @ index-9b361187527f3cb87339362a2363a3a4.js:49
+Bn @ index-9b361187527f3cb87339362a2363a3a4.js:49
+of @ index-9b361187527f3cb87339362a2363a3a4.js:49
+Fd @ index-9b361187527f3cb87339362a2363a3a4.js:49
+Td @ index-9b361187527f3cb87339362a2363a3a4.js:49Understand this warning
+spotify-trivia-jclaeson.replit.app/:1 Blocked aria-hidden on an element because its descendant retained focus. The focus must not be hidden from assistive technology users. Avoid using aria-hidden on a focused element or its ancestor. Consider using the inert attribute instead, which will also prevent focus. For more details, see the aria-hidden section of the WAI-ARIA specification at https://w3c.github.io/aria/#aria-hidden.
+Element with focus: <div.css-g5y9jx r-12vffkv#5>
+Ancestor with aria-hidden: <div.css-g5y9jx r-13awgt0 r-1p0dtai r-1d2f490 r-u8s1d r-zchlnj r-ipm5af> <div class=​"css-g5y9jx r-13awgt0 r-1p0dtai r-1d2f490 r-u8s1d r-zchlnj r-ipm5af" style=​"background-color:​ rgb(242, 242, 242)​;​ display:​ none;​" aria-hidden=​"true">​<div class=​"css-g5y9jx r-184en5c r-zchlnj r-1d2f490 r-u8s1d r-ipm5af r-12vffkv">​…​</div>​flex<div class=​"css-g5y9jx r-13awgt0">​…​</div>​flex</div>​Understand this warning
+index.js:15 It is recommended that a robustness level be specified. Not specifying the robustness level could result in unexpected behavior.
+t.requestMediaKeySystemAccess @ index.js:15
+t.init @ index.js:15
+(anonymous) @ index.js:15
+t.create @ index.js:15
+t.create @ index.js:15
+(anonymous) @ index.js:15
+r.createPlayer @ index.js:15
+d @ index.js:15
+r.createStreamerForClient @ index.js:15
+e._onInit @ index.js:30
+e._handleMessages @ index.js:30
+e._receiveMessage @ index.js:30Understand this warning
+index-9b361187527f3cb87339362a2363a3a4.js:1224 Spotify Player ready with device ID: 8828565bc8a7bd0eda0498e655028ae2b358ce54
+index-9b361187527f3cb87339362a2363a3a4.js:1224 Device activated successfully
+index-9b361187527f3cb87339362a2363a3a4.js:1206 Premium playback ready for track: 19
+index-9b361187527f3cb87339362a2363a3a4.js:1224  PUT https://api.spotify.com/v1/me/player/play?device_id=8828565bc8a7bd0eda0498e655028ae2b358ce54 400 (Bad Request)

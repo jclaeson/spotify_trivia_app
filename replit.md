@@ -4,6 +4,13 @@
 An interactive music trivia game built with Expo React Native that challenges users to identify songs from short audio previews. The app integrates with Spotify to fetch user playlists and allows searching for themed playlists.
 
 ## Recent Changes
+- **November 18, 2024**: Added Spotify Web Playback SDK for full-track playback
+  - Implemented Premium account detection with automatic fallback to preview URLs
+  - Added Web Playback SDK initialization with device activation
+  - Updated game logic to load all tracks for Premium users (no preview URL required)
+  - For free users: continues using 30-second preview URLs
+  - Added "FULL TRACK" badge in UI when Premium playback is active
+  - Fixed track selection to work with both Premium and free accounts
 - **November 17, 2024**: Initial app creation with Spotify OAuth integration
   - Implemented complete game flow with authentication, playlist selection, gameplay, and results
   - Added playlist search functionality allowing users to search by theme/keywords
