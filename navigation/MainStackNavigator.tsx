@@ -16,7 +16,6 @@ import { Spacing } from "@/constants/theme";
 import { QUESTION_COUNT, ANSWER_OPTIONS_COUNT } from "@/constants/config";
 import { checkSpotifyAuth, initiateSpotifyLogin, handleSpotifyCallback } from "@/utils/auth";
 import { loadTracksForPlaylist, generateQuestion, Track, GameQuestion } from "@/utils/gameLogic";
-import { checkPremiumStatus } from "@/utils/spotifyPlayer";
 
 export type MainStackParamList = {
   Login: undefined;
@@ -101,12 +100,11 @@ export default function MainStackNavigator() {
   };
 
   const handleStartGame = async (playlistId: string, navigation: any) => {
-    const hasPremium = Platform.OS === 'web' ? await checkPremiumStatus() : false;
-    const tracks = await loadTracksForPlaylist(playlistId, hasPremium);
+    const tracks = await loadTracksForPlaylist(playlistId);
     
     const minTracksNeeded = QUESTION_COUNT + ANSWER_OPTIONS_COUNT - 1;
     if (tracks.length < minTracksNeeded) {
-      alert(`This playlist doesn't have enough tracks${hasPremium ? '' : ' with audio previews'}. Need at least ${minTracksNeeded} tracks, found ${tracks.length}.`);
+      alert(`This playlist doesn't have enough tracks with audio previews. Need at least ${minTracksNeeded} tracks, found ${tracks.length}.`);
       return;
     }
     

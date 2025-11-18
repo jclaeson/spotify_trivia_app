@@ -38,7 +38,7 @@ const MOCK_TRACKS: Track[] = [
   { id: "20", name: "Peaches", artist: "Justin Bieber", previewUrl: "mock" },
 ];
 
-export async function loadTracksForPlaylist(playlistId: string, hasPremium: boolean = false): Promise<Track[]> {
+export async function loadTracksForPlaylist(playlistId: string): Promise<Track[]> {
   try {
     if (Platform.OS === 'web') {
       let fetchedTracks: Track[] = [];
@@ -61,21 +61,14 @@ export async function loadTracksForPlaylist(playlistId: string, hasPremium: bool
         }));
       }
 
-      if (hasPremium) {
-        if (fetchedTracks.length > 0) {
-          console.log(`Premium user: Using ${fetchedTracks.length} tracks (no preview URL required)`);
-          return fetchedTracks;
-        }
-      } else {
-        const tracksWithPreview = fetchedTracks.filter(track => track.previewUrl !== null);
-        
-        if (tracksWithPreview.length > 0) {
-          console.log(`Free user: Using ${tracksWithPreview.length} tracks with preview URLs`);
-          return tracksWithPreview;
-        }
-        
-        console.warn(`No tracks with previews found, using mock data`);
+      const tracksWithPreview = fetchedTracks.filter(track => track.previewUrl !== null);
+      
+      if (tracksWithPreview.length > 0) {
+        console.log(`Using ${tracksWithPreview.length} tracks with preview URLs`);
+        return tracksWithPreview;
       }
+      
+      console.warn(`No tracks with previews found, using mock data`);
     }
   } catch (error) {
     console.error('Error loading tracks:', error);
