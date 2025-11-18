@@ -11,6 +11,8 @@ An interactive music trivia game built with Expo React Native that challenges us
   - For free users: continues using 30-second preview URLs
   - Added "FULL TRACK" badge in UI when Premium playback is active
   - Fixed track selection to work with both Premium and free accounts
+  - Implemented comprehensive progress tracking with idle detection, null state handling, and position seeding to prevent infinite polling
+  - Fixed server.js port configuration: backend now correctly uses 8082, Expo uses 8081
 - **November 17, 2024**: Initial app creation with Spotify OAuth integration
   - Implemented complete game flow with authentication, playlist selection, gameplay, and results
   - Added playlist search functionality allowing users to search by theme/keywords
