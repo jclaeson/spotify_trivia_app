@@ -25,7 +25,9 @@ function validateRedirectUri(uri) {
   return ALLOWED_REDIRECT_URIS.includes(uri);
 }
 
-app.post('/api/spotify/token', async (req, res) => {
+const apiRouter = express.Router();
+
+apiRouter.post('/spotify/token', async (req, res) => {
   const { code, code_verifier, redirect_uri } = req.body;
 
   if (!code || !code_verifier || !redirect_uri) {
@@ -74,7 +76,7 @@ app.post('/api/spotify/token', async (req, res) => {
   }
 });
 
-app.post('/api/spotify/refresh', async (req, res) => {
+apiRouter.post('/spotify/refresh', async (req, res) => {
   const { refresh_token } = req.body;
 
   if (!refresh_token) {
@@ -112,24 +114,22 @@ app.post('/api/spotify/refresh', async (req, res) => {
   }
 });
 
+app.use('/api', apiRouter);
+
 if (isDevelopment) {
   console.log('Development mode: Proxying non-API requests to Expo dev server');
   
-  app.use('/', (req, res, next) => {
-    if (req.path.startsWith('/api/')) {
-      next();
-    } else {
-      createProxyMiddleware({
-        target: EXPO_DEV_SERVER,
-        changeOrigin: true,
-        ws: true,
-        onError: (err, req, res) => {
-          console.error('Proxy error:', err.message);
-          res.status(502).json({ error: 'Expo dev server not available' });
-        }
-      })(req, res, next);
+  const expoProxy = createProxyMiddleware({
+    target: EXPO_DEV_SERVER,
+    changeOrigin: true,
+    ws: true,
+    onError: (err, req, res) => {
+      console.error('Proxy error:', err.message);
+      res.status(502).json({ error: 'Expo dev server not available' });
     }
   });
+  
+  app.use('*', expoProxy);
 } else {
   console.log('Production mode: Serving static files');
   
