@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { StyleSheet, View, Pressable } from "react-native";
+import { StyleSheet, View, Pressable, Platform } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { Audio } from "expo-av";
 import Animated, {
@@ -15,6 +15,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { PREVIEW_DURATION_MS, QUESTION_COUNT } from "@/constants/config";
 import { Track } from "@/utils/gameLogic";
+import * as SpotifyPlayer from "@/utils/spotifyPlayer";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -46,7 +47,38 @@ export default function GamePlayScreen({
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [audioProgress, setAudioProgress] = useState(0);
+  const [usePremiumPlayback, setUsePremiumPlayback] = useState(false);
+  const [playerReady, setPlayerReady] = useState(false);
   const soundRef = useRef<Audio.Sound | null>(null);
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    const initPlayer = async () => {
+      if (Platform.OS === 'web') {
+        try {
+          const isPremium = await SpotifyPlayer.checkPremiumStatus();
+          if (isPremium) {
+            const deviceId = await SpotifyPlayer.initializePlayer();
+            if (deviceId) {
+              setUsePremiumPlayback(true);
+              setPlayerReady(true);
+            }
+          }
+        } catch (error) {
+          console.log('Premium playback not available, using previews');
+        }
+      }
+    };
+
+    initPlayer();
+
+    return () => {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
+      SpotifyPlayer.disconnectPlayer();
+    };
+  }, []);
 
   useEffect(() => {
     setSelectedAnswer(null);
@@ -57,7 +89,7 @@ export default function GamePlayScreen({
     return () => {
       cleanupAudio();
     };
-  }, [currentTrack]);
+  }, [currentTrack, usePremiumPlayback, playerReady]);
 
   useEffect(() => {
     if (selectedAnswer) {
@@ -67,6 +99,11 @@ export default function GamePlayScreen({
 
   const loadAudio = async () => {
     await cleanupAudio();
+    
+    if (usePremiumPlayback && playerReady && currentTrack.id) {
+      console.log('Premium playback ready for track:', currentTrack.id);
+      return;
+    }
     
     try {
       await Audio.setAudioModeAsync({
@@ -99,6 +136,15 @@ export default function GamePlayScreen({
   };
 
   const cleanupAudio = async () => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+
+    if (usePremiumPlayback) {
+      await SpotifyPlayer.pausePlayback();
+    }
+
     if (soundRef.current) {
       try {
         await soundRef.current.unloadAsync();
@@ -109,27 +155,70 @@ export default function GamePlayScreen({
     }
   };
 
-  const handleToggleAudio = async () => {
-    if (currentTrack.previewUrl === 'mock') {
-      return;
+  const startProgressTracking = () => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
     }
-    
-    if (!soundRef.current || !currentTrack.previewUrl) {
+
+    progressIntervalRef.current = setInterval(async () => {
+      const state = await SpotifyPlayer.getCurrentPlaybackState();
+      if (state) {
+        const progress = (state.position / PREVIEW_DURATION_MS) * 100;
+        setAudioProgress(Math.min(progress, 100));
+
+        if (state.position >= PREVIEW_DURATION_MS) {
+          await SpotifyPlayer.pausePlayback();
+          setAudioPlaying(false);
+          if (progressIntervalRef.current) {
+            clearInterval(progressIntervalRef.current);
+          }
+        }
+
+        if (state.paused && audioPlaying) {
+          setAudioPlaying(false);
+        }
+      }
+    }, 100);
+  };
+
+  const handleToggleAudio = async () => {
+    if (currentTrack.previewUrl === 'mock' && !usePremiumPlayback) {
       return;
     }
 
     try {
-      if (audioPlaying) {
-        await soundRef.current.pauseAsync();
-        setAudioPlaying(false);
-      } else {
-        const status = await soundRef.current.getStatusAsync();
-        if (status.isLoaded && status.positionMillis >= PREVIEW_DURATION_MS) {
-          await soundRef.current.setPositionAsync(0);
-          setAudioProgress(0);
+      if (usePremiumPlayback && playerReady && currentTrack.id) {
+        if (audioPlaying) {
+          await SpotifyPlayer.pausePlayback();
+          setAudioPlaying(false);
+          if (progressIntervalRef.current) {
+            clearInterval(progressIntervalRef.current);
+          }
+        } else {
+          const trackUri = `spotify:track:${currentTrack.id}`;
+          const success = await SpotifyPlayer.playTrack(trackUri);
+          if (success) {
+            setAudioPlaying(true);
+            startProgressTracking();
+          }
         }
-        await soundRef.current.playAsync();
-        setAudioPlaying(true);
+      } else {
+        if (!soundRef.current || !currentTrack.previewUrl) {
+          return;
+        }
+
+        if (audioPlaying) {
+          await soundRef.current.pauseAsync();
+          setAudioPlaying(false);
+        } else {
+          const status = await soundRef.current.getStatusAsync();
+          if (status.isLoaded && status.positionMillis >= PREVIEW_DURATION_MS) {
+            await soundRef.current.setPositionAsync(0);
+            setAudioProgress(0);
+          }
+          await soundRef.current.playAsync();
+          setAudioPlaying(true);
+        }
       }
     } catch (error) {
       console.error('Error toggling audio:', error);
@@ -193,24 +282,24 @@ export default function GamePlayScreen({
           style={[
             styles.playButton,
             {
-              backgroundColor: (currentTrack.previewUrl && currentTrack.previewUrl !== 'mock') ? theme.primary : theme.backgroundDefault,
+              backgroundColor: (usePremiumPlayback || (currentTrack.previewUrl && currentTrack.previewUrl !== 'mock')) ? theme.primary : theme.backgroundDefault,
               shadowColor: "#000",
             },
           ]}
-          disabled={!currentTrack.previewUrl || currentTrack.previewUrl === 'mock'}
+          disabled={!usePremiumPlayback && (!currentTrack.previewUrl || currentTrack.previewUrl === 'mock')}
         >
           <Feather
             name={audioPlaying ? "pause" : "play"}
             size={32}
-            color={(currentTrack.previewUrl && currentTrack.previewUrl !== 'mock') ? "#FFFFFF" : theme.textSecondary}
+            color={(usePremiumPlayback || (currentTrack.previewUrl && currentTrack.previewUrl !== 'mock')) ? "#FFFFFF" : theme.textSecondary}
           />
         </Pressable>
         <View style={styles.progressInfo}>
-          {currentTrack.previewUrl === 'mock' ? (
+          {!usePremiumPlayback && currentTrack.previewUrl === 'mock' ? (
             <ThemedText type="small" style={{ color: theme.textSecondary }}>
               Audio preview not available
             </ThemedText>
-          ) : currentTrack.previewUrl ? (
+          ) : usePremiumPlayback || currentTrack.previewUrl ? (
             <>
               <View
                 style={[
@@ -228,9 +317,18 @@ export default function GamePlayScreen({
                   ]}
                 />
               </View>
-              <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                {Math.floor((audioProgress / 100) * (PREVIEW_DURATION_MS / 1000))}s / {PREVIEW_DURATION_MS / 1000}s
-              </ThemedText>
+              <View style={styles.playbackStatusRow}>
+                <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                  {Math.floor((audioProgress / 100) * (PREVIEW_DURATION_MS / 1000))}s / {PREVIEW_DURATION_MS / 1000}s
+                </ThemedText>
+                {usePremiumPlayback ? (
+                  <View style={[styles.premiumBadge, { backgroundColor: theme.primary }]}>
+                    <ThemedText type="small" style={{ color: "#FFFFFF", fontSize: 10, fontWeight: "600" }}>
+                      FULL TRACK
+                    </ThemedText>
+                  </View>
+                ) : null}
+              </View>
             </>
           ) : (
             <ThemedText type="small" style={{ color: theme.textSecondary }}>
@@ -407,6 +505,16 @@ const styles = StyleSheet.create({
   waveformFill: {
     height: "100%",
     borderRadius: 4,
+  },
+  playbackStatusRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  premiumBadge: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.sm,
   },
   answersContainer: {
     flex: 1,
