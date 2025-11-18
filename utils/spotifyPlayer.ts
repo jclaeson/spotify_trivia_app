@@ -118,9 +118,35 @@ export async function initializePlayer(): Promise<string | null> {
         return;
       }
 
-      player.addListener('ready', ({ device_id }: { device_id: string }) => {
+      player.addListener('ready', async ({ device_id }: { device_id: string }) => {
         console.log('Spotify Player ready with device ID:', device_id);
         deviceId = device_id;
+        
+        try {
+          const token = getSpotifyAccessToken();
+          if (token) {
+            const transferResponse = await fetch('https://api.spotify.com/v1/me/player', {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                device_ids: [device_id],
+                play: false,
+              }),
+            });
+
+            if (!transferResponse.ok && transferResponse.status !== 204) {
+              console.warn('Device activation warning:', transferResponse.status);
+            } else {
+              console.log('Device activated successfully');
+            }
+          }
+        } catch (error) {
+          console.warn('Error activating device:', error);
+        }
+        
         resolve(device_id);
       });
 
@@ -160,12 +186,27 @@ export async function playTrack(trackUri: string, positionMs: number = 0): Promi
       }
     }
 
-    const spotify = await getUncachableSpotifyClient();
-    
-    await spotify.player.startResumePlayback(deviceId!, undefined, {
-      uris: [trackUri],
-      position_ms: positionMs,
-    } as any);
+    const token = getSpotifyAccessToken();
+    if (!token) {
+      return false;
+    }
+
+    const response = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        uris: [trackUri],
+        position_ms: positionMs,
+      }),
+    });
+
+    if (!response.ok && response.status !== 204) {
+      console.error('Playback error:', response.status, await response.text());
+      return false;
+    }
 
     return true;
   } catch (error) {

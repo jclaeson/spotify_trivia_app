@@ -49,6 +49,7 @@ export default function GamePlayScreen({
   const [audioProgress, setAudioProgress] = useState(0);
   const [usePremiumPlayback, setUsePremiumPlayback] = useState(false);
   const [playerReady, setPlayerReady] = useState(false);
+  const [trackDuration, setTrackDuration] = useState(PREVIEW_DURATION_MS);
   const soundRef = useRef<Audio.Sound | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -163,10 +164,15 @@ export default function GamePlayScreen({
     progressIntervalRef.current = setInterval(async () => {
       const state = await SpotifyPlayer.getCurrentPlaybackState();
       if (state) {
-        const progress = (state.position / PREVIEW_DURATION_MS) * 100;
+        if (state.duration > 0) {
+          setTrackDuration(Math.min(state.duration, PREVIEW_DURATION_MS));
+        }
+        
+        const duration = trackDuration;
+        const progress = (state.position / duration) * 100;
         setAudioProgress(Math.min(progress, 100));
 
-        if (state.position >= PREVIEW_DURATION_MS) {
+        if (state.position >= duration) {
           await SpotifyPlayer.pausePlayback();
           setAudioPlaying(false);
           if (progressIntervalRef.current) {
@@ -319,7 +325,7 @@ export default function GamePlayScreen({
               </View>
               <View style={styles.playbackStatusRow}>
                 <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                  {Math.floor((audioProgress / 100) * (PREVIEW_DURATION_MS / 1000))}s / {PREVIEW_DURATION_MS / 1000}s
+                  {Math.floor((audioProgress / 100) * (trackDuration / 1000))}s / {Math.floor(trackDuration / 1000)}s
                 </ThemedText>
                 {usePremiumPlayback ? (
                   <View style={[styles.premiumBadge, { backgroundColor: theme.primary }]}>
