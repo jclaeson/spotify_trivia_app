@@ -52,6 +52,7 @@ export default function GamePlayScreen({
   const [trackDuration, setTrackDuration] = useState(PREVIEW_DURATION_MS);
   const soundRef = useRef<Audio.Sound | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const trackDurationRef = useRef<number>(PREVIEW_DURATION_MS);
 
   useEffect(() => {
     const initPlayer = async () => {
@@ -85,6 +86,8 @@ export default function GamePlayScreen({
     setSelectedAnswer(null);
     setAudioPlaying(false);
     setAudioProgress(0);
+    trackDurationRef.current = PREVIEW_DURATION_MS;
+    setTrackDuration(PREVIEW_DURATION_MS);
     loadAudio();
     
     return () => {
@@ -123,7 +126,8 @@ export default function GamePlayScreen({
           if (status.isLoaded) {
             const actualDuration = status.durationMillis || PREVIEW_DURATION_MS;
             
-            if (status.durationMillis && status.durationMillis !== trackDuration) {
+            if (status.durationMillis) {
+              trackDurationRef.current = status.durationMillis;
               setTrackDuration(status.durationMillis);
             }
             
@@ -170,10 +174,11 @@ export default function GamePlayScreen({
     progressIntervalRef.current = setInterval(async () => {
       const state = await SpotifyPlayer.getCurrentPlaybackState();
       if (state) {
-        const actualDuration = state.duration > 0 ? state.duration : PREVIEW_DURATION_MS;
+        const actualDuration = state.duration > 0 ? state.duration : trackDurationRef.current;
         
         if (state.duration > 0) {
-          setTrackDuration(actualDuration);
+          trackDurationRef.current = state.duration;
+          setTrackDuration(state.duration);
         }
         
         const progress = (state.position / actualDuration) * 100;
@@ -225,7 +230,7 @@ export default function GamePlayScreen({
           setAudioPlaying(false);
         } else {
           const status = await soundRef.current.getStatusAsync();
-          if (status.isLoaded && status.positionMillis >= PREVIEW_DURATION_MS) {
+          if (status.isLoaded && status.positionMillis >= trackDurationRef.current) {
             await soundRef.current.setPositionAsync(0);
             setAudioProgress(0);
           }
