@@ -88,7 +88,7 @@ integrations = ["spotify:1.0.0"]
 [deployment]
 deploymentTarget = "cloudrun"
 build = ["node", "scripts/build.js"]
-run = ["sh", "-c", "npm start"]
+run = ["sh", "-c", "node server.js"]
 
 # Expo manifest headers
 [[deployment.responseHeaders]]
