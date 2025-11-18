@@ -12,6 +12,9 @@ const SPOTIFY_SCOPES = [
   'user-read-private',
   'user-read-recently-played',
   'user-top-read',
+  'streaming',
+  'user-read-playback-state',
+  'user-modify-playback-state',
 ].join(' ');
 
 function generateRandomString(length: number): string {
