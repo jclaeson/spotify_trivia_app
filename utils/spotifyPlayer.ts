@@ -122,25 +122,38 @@ export async function initializePlayer(): Promise<string | null> {
         console.log('Spotify Player ready with device ID:', device_id);
         deviceId = device_id;
         
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
         try {
           const token = getSpotifyAccessToken();
           if (token) {
-            const transferResponse = await fetch('https://api.spotify.com/v1/me/player', {
-              method: 'PUT',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-              },
-              body: JSON.stringify({
-                device_ids: [device_id],
-                play: false,
-              }),
-            });
+            let retries = 3;
+            let success = false;
+            
+            while (retries > 0 && !success) {
+              const transferResponse = await fetch('https://api.spotify.com/v1/me/player', {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                  device_ids: [device_id],
+                  play: false,
+                }),
+              });
 
-            if (!transferResponse.ok && transferResponse.status !== 204) {
-              console.warn('Device activation warning:', transferResponse.status);
-            } else {
-              console.log('Device activated successfully');
+              if (transferResponse.ok || transferResponse.status === 204) {
+                console.log('Device activated successfully');
+                success = true;
+              } else if (transferResponse.status === 404 && retries > 1) {
+                console.log(`Device not found, retrying... (${retries - 1} attempts left)`);
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                retries--;
+              } else {
+                console.warn('Device activation failed:', transferResponse.status);
+                break;
+              }
             }
           }
         } catch (error) {
@@ -191,24 +204,40 @@ export async function playTrack(trackUri: string, positionMs: number = 0): Promi
       return false;
     }
 
-    const response = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        uris: [trackUri],
-        position_ms: positionMs,
-      }),
-    });
+    let retries = 3;
+    let lastError: any = null;
 
-    if (!response.ok && response.status !== 204) {
-      console.error('Playback error:', response.status, await response.text());
+    while (retries > 0) {
+      const response = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          uris: [trackUri],
+          position_ms: positionMs,
+        }),
+      });
+
+      if (response.ok || response.status === 204) {
+        return true;
+      }
+
+      if (response.status === 404 && retries > 1) {
+        console.log(`Device not ready for playback, retrying... (${retries - 1} attempts left)`);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        retries--;
+        continue;
+      }
+
+      lastError = await response.text();
+      console.error('Playback error:', response.status, lastError);
       return false;
     }
 
-    return true;
+    console.error('Playback failed after retries:', lastError);
+    return false;
   } catch (error) {
     console.error('Error playing track:', error);
     return false;
