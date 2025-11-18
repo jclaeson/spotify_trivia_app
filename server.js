@@ -129,7 +129,7 @@ if (isDevelopment) {
     }
   });
   
-  app.use('*', expoProxy);
+  app.use(expoProxy);
 } else {
   console.log('Production mode: Serving static files');
   
