@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { StyleSheet, View, Pressable, Linking } from "react-native";
+import { StyleSheet, View, Pressable, Linking, Platform } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { Audio } from "expo-av";
 import Animated, {
@@ -15,6 +15,14 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { PREVIEW_DURATION_MS, QUESTION_COUNT } from "@/constants/config";
 import { Track } from "@/utils/gameLogic";
+import {
+  checkPremiumStatus,
+  initializePlayer,
+  playTrack,
+  pausePlayback,
+  resumePlayback,
+  getCurrentPlaybackState,
+} from "@/utils/spotifyPlayer";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -46,7 +54,21 @@ export default function GamePlayScreen({
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [audioProgress, setAudioProgress] = useState(0);
+  const [hasPremium, setHasPremium] = useState(false);
   const soundRef = useRef<Audio.Sound | null>(null);
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const playbackStartTimeRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      checkPremiumStatus().then((isPremium) => {
+        setHasPremium(isPremium);
+        if (isPremium) {
+          initializePlayer();
+        }
+      });
+    }
+  }, []);
 
   useEffect(() => {
     setSelectedAnswer(null);
@@ -69,29 +91,31 @@ export default function GamePlayScreen({
     await cleanupAudio();
     
     try {
-      await Audio.setAudioModeAsync({
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: false,
-      });
-
-      if (currentTrack.previewUrl && currentTrack.previewUrl !== 'mock') {
-        const { sound } = await Audio.Sound.createAsync(
-          { uri: currentTrack.previewUrl },
-          { shouldPlay: false }
-        );
-        soundRef.current = sound;
-
-        sound.setOnPlaybackStatusUpdate((status) => {
-          if (status.isLoaded) {
-            const progress = (status.positionMillis / PREVIEW_DURATION_MS) * 100;
-            setAudioProgress(Math.min(progress, 100));
-
-            if (status.positionMillis >= PREVIEW_DURATION_MS) {
-              sound.pauseAsync();
-              setAudioPlaying(false);
-            }
-          }
+      if (!hasPremium) {
+        await Audio.setAudioModeAsync({
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: false,
         });
+
+        if (currentTrack.previewUrl && currentTrack.previewUrl !== 'mock') {
+          const { sound } = await Audio.Sound.createAsync(
+            { uri: currentTrack.previewUrl },
+            { shouldPlay: false }
+          );
+          soundRef.current = sound;
+
+          sound.setOnPlaybackStatusUpdate((status) => {
+            if (status.isLoaded) {
+              const progress = (status.positionMillis / PREVIEW_DURATION_MS) * 100;
+              setAudioProgress(Math.min(progress, 100));
+
+              if (status.positionMillis >= PREVIEW_DURATION_MS) {
+                sound.pauseAsync();
+                setAudioPlaying(false);
+              }
+            }
+          });
+        }
       }
     } catch (error) {
       console.error('Error loading audio:', error);
@@ -99,6 +123,19 @@ export default function GamePlayScreen({
   };
 
   const cleanupAudio = async () => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+
+    if (hasPremium && Platform.OS === 'web') {
+      try {
+        await pausePlayback();
+      } catch (error) {
+        console.error('Error pausing premium playback:', error);
+      }
+    }
+
     if (soundRef.current) {
       try {
         await soundRef.current.unloadAsync();
@@ -109,27 +146,68 @@ export default function GamePlayScreen({
     }
   };
 
-  const handleToggleAudio = async () => {
-    if (currentTrack.previewUrl === 'mock') {
-      return;
+  const startPremiumProgressTracking = () => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
     }
 
-    try {
-      if (!soundRef.current || !currentTrack.previewUrl) {
-        return;
-      }
+    playbackStartTimeRef.current = Date.now();
 
-      if (audioPlaying) {
-        await soundRef.current.pauseAsync();
+    progressIntervalRef.current = setInterval(async () => {
+      const elapsed = Date.now() - playbackStartTimeRef.current;
+      const progress = Math.min((elapsed / PREVIEW_DURATION_MS) * 100, 100);
+      setAudioProgress(progress);
+
+      if (elapsed >= PREVIEW_DURATION_MS) {
+        await pausePlayback();
         setAudioPlaying(false);
-      } else {
-        const status = await soundRef.current.getStatusAsync();
-        if (status.isLoaded && status.positionMillis >= PREVIEW_DURATION_MS) {
-          await soundRef.current.setPositionAsync(0);
-          setAudioProgress(0);
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current);
+          progressIntervalRef.current = null;
         }
-        await soundRef.current.playAsync();
-        setAudioPlaying(true);
+      }
+    }, 100);
+  };
+
+  const handleToggleAudio = async () => {
+    try {
+      if (hasPremium && Platform.OS === 'web') {
+        if (audioPlaying) {
+          await pausePlayback();
+          setAudioPlaying(false);
+          if (progressIntervalRef.current) {
+            clearInterval(progressIntervalRef.current);
+            progressIntervalRef.current = null;
+          }
+        } else {
+          const trackUri = `spotify:track:${currentTrack.id}`;
+          const success = await playTrack(trackUri, 0);
+          if (success) {
+            setAudioPlaying(true);
+            startPremiumProgressTracking();
+          }
+        }
+      } else {
+        if (currentTrack.previewUrl === 'mock' || !currentTrack.previewUrl) {
+          return;
+        }
+
+        if (!soundRef.current) {
+          return;
+        }
+
+        if (audioPlaying) {
+          await soundRef.current.pauseAsync();
+          setAudioPlaying(false);
+        } else {
+          const status = await soundRef.current.getStatusAsync();
+          if (status.isLoaded && status.positionMillis >= PREVIEW_DURATION_MS) {
+            await soundRef.current.setPositionAsync(0);
+            setAudioProgress(0);
+          }
+          await soundRef.current.playAsync();
+          setAudioPlaying(true);
+        }
       }
     } catch (error) {
       console.error('Error toggling audio:', error);
@@ -200,24 +278,24 @@ export default function GamePlayScreen({
           style={[
             styles.playButton,
             {
-              backgroundColor: (currentTrack.previewUrl && currentTrack.previewUrl !== 'mock') ? theme.primary : theme.backgroundDefault,
+              backgroundColor: (hasPremium || (currentTrack.previewUrl && currentTrack.previewUrl !== 'mock')) ? theme.primary : theme.backgroundDefault,
               shadowColor: "#000",
             },
           ]}
-          disabled={!currentTrack.previewUrl || currentTrack.previewUrl === 'mock'}
+          disabled={!hasPremium && (!currentTrack.previewUrl || currentTrack.previewUrl === 'mock')}
         >
           <Feather
             name={audioPlaying ? "pause" : "play"}
             size={32}
-            color={(currentTrack.previewUrl && currentTrack.previewUrl !== 'mock') ? "#FFFFFF" : theme.textSecondary}
+            color={(hasPremium || (currentTrack.previewUrl && currentTrack.previewUrl !== 'mock')) ? "#FFFFFF" : theme.textSecondary}
           />
         </Pressable>
         <View style={styles.progressInfo}>
-          {currentTrack.previewUrl === 'mock' ? (
+          {!hasPremium && currentTrack.previewUrl === 'mock' ? (
             <ThemedText type="small" style={{ color: theme.textSecondary }}>
               Audio preview not available
             </ThemedText>
-          ) : currentTrack.previewUrl ? (
+          ) : (hasPremium || currentTrack.previewUrl) ? (
             <>
               <View
                 style={[
