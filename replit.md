@@ -4,15 +4,13 @@
 An interactive music trivia game built with Expo React Native that challenges users to identify songs from short audio previews. The app integrates with Spotify to fetch user playlists and allows searching for themed playlists.
 
 ## Recent Changes
-- **November 18, 2024**: Added Spotify Web Playback SDK for full-track playback
-  - Implemented Premium account detection with automatic fallback to preview URLs
-  - Added Web Playback SDK initialization with device activation
-  - Updated game logic to load all tracks for Premium users (no preview URL required)
-  - For free users: continues using 30-second preview URLs
-  - Added "FULL TRACK" badge in UI when Premium playback is active
-  - Fixed track selection to work with both Premium and free accounts
-  - Implemented comprehensive progress tracking with idle detection, null state handling, and position seeding to prevent infinite polling
-  - Fixed server.js port configuration: backend now correctly uses 8082, Expo uses 8081
+- **November 18, 2024**: Simplified to 15-second preview playback for all users
+  - Changed preview duration from 5 seconds to 15 seconds
+  - Removed Premium playback (Web Playback SDK) - all users now get same experience
+  - Added "Open in Spotify" button to open full track in Spotify web player
+  - Simplified GamePlayScreen to only use expo-av with preview URLs
+  - All users (free and premium) now play 15-second previews consistently
+  - Fixed server.js port configuration: backend uses 8082, Expo uses 8081
 - **November 17, 2024**: Initial app creation with Spotify OAuth integration
   - Implemented complete game flow with authentication, playlist selection, gameplay, and results
   - Added playlist search functionality allowing users to search by theme/keywords
@@ -48,7 +46,8 @@ An interactive music trivia game built with Expo React Native that challenges us
 3. **Game Mechanics**:
    - 10 rounds per game
    - 4 multiple-choice answers per question
-   - Configurable audio preview duration (default 5 seconds)
+   - 15-second audio preview for all users
+   - "Open in Spotify" button to play full track
    - Real-time score tracking
    - Detailed results breakdown
 4. **Cross-Platform**: Works on iOS, Android, and Web
@@ -85,7 +84,7 @@ An interactive music trivia game built with Expo React Native that challenges us
 #### Preview Duration
 Adjust in `constants/config.ts`:
 ```typescript
-export const PREVIEW_DURATION_MS = 5000; // milliseconds
+export const PREVIEW_DURATION_MS = 15000; // 15 seconds
 export const QUESTION_COUNT = 10;
 export const ANSWER_OPTIONS_COUNT = 4;
 ```
