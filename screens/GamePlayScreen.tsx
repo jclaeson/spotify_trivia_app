@@ -121,10 +121,16 @@ export default function GamePlayScreen({
 
         sound.setOnPlaybackStatusUpdate((status) => {
           if (status.isLoaded) {
-            const progress = (status.positionMillis / PREVIEW_DURATION_MS) * 100;
+            const actualDuration = status.durationMillis || PREVIEW_DURATION_MS;
+            
+            if (status.durationMillis && status.durationMillis !== trackDuration) {
+              setTrackDuration(status.durationMillis);
+            }
+            
+            const progress = (status.positionMillis / actualDuration) * 100;
             setAudioProgress(Math.min(progress, 100));
 
-            if (status.positionMillis >= PREVIEW_DURATION_MS) {
+            if (status.positionMillis >= actualDuration) {
               sound.pauseAsync();
               setAudioPlaying(false);
             }
@@ -164,15 +170,16 @@ export default function GamePlayScreen({
     progressIntervalRef.current = setInterval(async () => {
       const state = await SpotifyPlayer.getCurrentPlaybackState();
       if (state) {
+        const actualDuration = state.duration > 0 ? state.duration : PREVIEW_DURATION_MS;
+        
         if (state.duration > 0) {
-          setTrackDuration(Math.min(state.duration, PREVIEW_DURATION_MS));
+          setTrackDuration(actualDuration);
         }
         
-        const duration = trackDuration;
-        const progress = (state.position / duration) * 100;
+        const progress = (state.position / actualDuration) * 100;
         setAudioProgress(Math.min(progress, 100));
 
-        if (state.position >= duration) {
+        if (state.position >= actualDuration) {
           await SpotifyPlayer.pausePlayback();
           setAudioPlaying(false);
           if (progressIntervalRef.current) {
