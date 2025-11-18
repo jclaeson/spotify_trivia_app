@@ -1,4 +1,4 @@
-export const PREVIEW_DURATION_MS = 5000;
+export const PREVIEW_DURATION_MS = 15000;
 
 export const QUESTION_COUNT = 10;
 
