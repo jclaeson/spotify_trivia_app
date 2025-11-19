@@ -4,6 +4,14 @@
 An interactive music trivia game built with Expo React Native that challenges users to identify songs from short audio previews. The app integrates with Spotify to fetch user playlists.
 
 ## Recent Changes
+- **November 19, 2024**: Created Kubernetes deployment infrastructure for Azure AKS
+  - Built complete containerization with Dockerfile.backend and Dockerfile.frontend
+  - Created all Kubernetes manifests (deployments, services, ingress, configmap, secrets)
+  - Added comprehensive deployment guide (k8s/DEPLOY.md) for AKS setup
+  - Fixed port alignment across all components (backend standardized to 8080)
+  - Configured environment-based CORS and redirect URIs for multi-environment support
+  - Implemented semantic versioning for Docker images (v1.0.0)
+  - Backend supports both monolithic (Replit) and microservice (K8s) architectures
 - **November 19, 2024**: Removed playlist search functionality
   - Simplified GameSetupScreen to only show user's own playlists
   - Removed search bar and search-related code
@@ -130,9 +138,36 @@ On web, the app fetches real Spotify data via OAuth. On mobile (Expo Go), it use
 - Use QR code from Replit URL bar to test on physical devices via Expo Go
 - Web version accessible at the provided localhost URL during development
 - **Backend server must be running** for OAuth to work:
-  - Start manually: `PORT=8082 node server.js`
+  - Start manually: `PORT=8080 node server.js` (defaults to 8080 now)
   - Or use `bash start-dev.sh` to start both Expo and backend servers
-- Expo runs on port 8081, backend on port 8082 (external :3000)
+- Expo runs on port 8081, backend defaults to port 8080 (configurable via PORT env var)
+
+### Kubernetes Deployment
+The app is fully containerized and ready for deployment on Azure Kubernetes Service (AKS):
+
+**Architecture:**
+- **Backend Container** (Node.js Alpine): Express OAuth server handling /api routes and /callback
+- **Frontend Container** (Multi-stage: Expo build + Nginx): Serves static web bundle
+
+**Deployment Files:**
+- `Dockerfile.backend` - Backend containerization with health checks
+- `Dockerfile.frontend` - Multi-stage build (Expo + Nginx serving)
+- `k8s/backend-deployment.yaml` - Backend pod configuration with secrets and configmap
+- `k8s/frontend-deployment.yaml` - Frontend pod configuration
+- `k8s/backend-service.yaml` - Backend ClusterIP service (port 8080)
+- `k8s/frontend-service.yaml` - Frontend ClusterIP service (port 80)
+- `k8s/ingress.yaml` - Nginx ingress with path-based routing
+- `k8s/configmap.yaml` - Environment variables (ALLOWED_ORIGINS, ALLOWED_REDIRECT_URIS, etc.)
+- `k8s/secrets.yaml.template` - Secret template for Spotify credentials
+- `k8s/DEPLOY.md` - Complete deployment guide with Azure CLI commands
+
+**Key Features:**
+- Environment-based configuration (CORS origins, redirect URIs)
+- Semantic versioning for images (v1.0.0)
+- Health checks and readiness probes
+- Resource limits and requests
+- Ingress routing: `/api` and `/callback` → backend, `/` → frontend
+- Cross-platform deployment scripts (macOS and Linux compatible)
 
 ### Known Limitations
 - Audio preview playback is simulated (no actual Spotify audio in prototype)
