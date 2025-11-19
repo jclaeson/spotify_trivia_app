@@ -1,0 +1,43 @@
+# Node modules
+node_modules/
+npm-debug.log*
+
+# Expo
+.expo/
+.expo-shared/
+dist/
+
+# Development files
+*.log
+.DS_Store
+.env
+.env.local
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+
+# Build artifacts
+*.js.map
+
+# Documentation (but keep nginx.conf for frontend build)
+*.md
+!README.md
+
+# CI/CD
+.github/
+
+# Kubernetes manifests (but keep nginx.conf)
+k8s/*.yaml
+k8s/*.template
+k8s/DEPLOY.md
+k8s/README.md
+
+# Test files
+__tests__/
+*.test.js
+*.spec.js

@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: guess-that-track-config
+  namespace: default
+data:
+  # Backend configuration
+  NODE_ENV: "production"
+  PORT: "8080"
+  
+  # Frontend URL (update this with your actual domain)
+  FRONTEND_URL: "https://your-domain.com"
+  
+  # CORS allowed origins - comma-separated list (update with your actual domain)
+  ALLOWED_ORIGINS: "https://your-domain.com"
+  
+  # Spotify redirect URIs - comma-separated list (update with your actual domain)
+  ALLOWED_REDIRECT_URIS: "https://your-domain.com/callback"

@@ -4,22 +4,35 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 const fs = require('fs');
 const path = require('path');
 
-const app = express();
-
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-const PORT = process.env.PORT || 8082;
+const PORT = process.env.PORT || 8080;
 const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID || '04246e81b0fa44278bfd1821ad90204a';
 const EXPO_DEV_SERVER = 'http://localhost:8081';
-const isDevelopment = !fs.existsSync(path.join(__dirname, 'static-build'));
+const isDevelopment = process.env.NODE_ENV !== 'production';
 
-const ALLOWED_REDIRECT_URIS = [
-  process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}/callback` : null,
-  'https://spotify-trivia-jclaeson.replit.app/callback',
-  'http://localhost:8081/callback',
-].filter(Boolean);
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS 
+  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  : [
+      process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : null,
+      'https://spotify-trivia-jclaeson.replit.app',
+      'http://localhost:8081',
+    ].filter(Boolean);
+
+const ALLOWED_REDIRECT_URIS = process.env.ALLOWED_REDIRECT_URIS
+  ? process.env.ALLOWED_REDIRECT_URIS.split(',').map(u => u.trim())
+  : [
+      process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}/callback` : null,
+      'https://spotify-trivia-jclaeson.replit.app/callback',
+      'http://localhost:8081/callback',
+    ].filter(Boolean);
+
+const app = express();
+
+app.use(cors({
+  origin: ALLOWED_ORIGINS,
+  credentials: true,
+}));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 function validateRedirectUri(uri) {
   return ALLOWED_REDIRECT_URIS.includes(uri);
@@ -114,6 +127,10 @@ apiRouter.post('/spotify/refresh', async (req, res) => {
   }
 });
 
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
+});
+
 app.use('/api', apiRouter);
 
 if (isDevelopment) {
@@ -131,13 +148,17 @@ if (isDevelopment) {
   
   app.use(expoProxy);
 } else {
-  console.log('Production mode: Serving static files');
+  const staticBuildPath = path.join(__dirname, 'static-build');
   
-  app.use(express.static('static-build'));
-  
-  app.use((req, res) => {
-    res.sendFile(path.join(__dirname, 'static-build', 'index.html'));
-  });
+  if (fs.existsSync(staticBuildPath)) {
+    console.log('Production mode: Serving static files from static-build/');
+    app.use(express.static(staticBuildPath));
+    app.use((req, res) => {
+      res.sendFile(path.join(staticBuildPath, 'index.html'));
+    });
+  } else {
+    console.log('Production mode: API-only (static files served separately by frontend container)');
+  }
 }
 
 app.listen(PORT, () => {

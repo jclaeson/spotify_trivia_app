@@ -1,0 +1,95 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: default
+  labels:
+    app: guess-that-track
+    component: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: guess-that-track
+      component: backend
+  template:
+    metadata:
+      labels:
+        app: guess-that-track
+        component: backend
+    spec:
+      containers:
+      - name: backend
+        image: <YOUR_ACR_NAME>.azurecr.io/guess-that-track-backend:v1.0.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        # Environment variables from ConfigMap
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: guess-that-track-config
+              key: NODE_ENV
+        - name: PORT
+          valueFrom:
+            configMapKeyRef:
+              name: guess-that-track-config
+              key: PORT
+        - name: FRONTEND_URL
+          valueFrom:
+            configMapKeyRef:
+              name: guess-that-track-config
+              key: FRONTEND_URL
+        - name: ALLOWED_ORIGINS
+          valueFrom:
+            configMapKeyRef:
+              name: guess-that-track-config
+              key: ALLOWED_ORIGINS
+        - name: ALLOWED_REDIRECT_URIS
+          valueFrom:
+            configMapKeyRef:
+              name: guess-that-track-config
+              key: ALLOWED_REDIRECT_URIS
+        
+        # Secrets
+        - name: SPOTIFY_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: guess-that-track-secrets
+              key: SPOTIFY_CLIENT_ID
+        - name: SPOTIFY_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: guess-that-track-secrets
+              key: SPOTIFY_CLIENT_SECRET
+        - name: SESSION_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: guess-that-track-secrets
+              key: SESSION_SECRET
+        
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 5
+        
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
