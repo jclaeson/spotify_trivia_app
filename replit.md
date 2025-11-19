@@ -1,20 +1,23 @@
 # Guess That Track - Spotify Trivia Game
 
 ## Overview
-An interactive music trivia game built with Expo React Native that challenges users to identify songs from short audio previews. The app integrates with Spotify to fetch user playlists and allows searching for themed playlists.
+An interactive music trivia game built with Expo React Native that challenges users to identify songs from short audio previews. The app integrates with Spotify to fetch user playlists.
 
 ## Recent Changes
+- **November 19, 2024**: Removed playlist search functionality
+  - Simplified GameSetupScreen to only show user's own playlists
+  - Removed search bar and search-related code
+  - Cleaner, more focused playlist selection experience
 - **November 18, 2024**: Premium users can now play all tracks with 15-second snippets
   - Changed preview duration to 15 seconds for all users
   - **Premium users**: Use Spotify Web Playback SDK to play first 15 seconds of ANY track
   - **Free users**: Use preview URLs (only tracks with preview URLs available)
   - Added "Open in Spotify" button to open full track in Spotify web player
   - Premium playback uses event-driven state tracking for accurate position monitoring
-  - Both Premium and free users get 15-second playback duration
+  - Fixed device activation with retry logic to prevent 404 errors
   - Fixed server.js port configuration: backend uses 8082, Expo uses 8081
 - **November 17, 2024**: Initial app creation with Spotify OAuth integration
   - Implemented complete game flow with authentication, playlist selection, gameplay, and results
-  - Added playlist search functionality allowing users to search by theme/keywords
   - Configured for web browser sharing with friends
   - Set up configurable preview duration in `constants/config.ts`
   - Updated deployment to serve web version at root URL (not just QR code landing page)
@@ -42,7 +45,6 @@ An interactive music trivia game built with Expo React Native that challenges us
 1. **Spotify OAuth Authentication**: Uses Replit Spotify connector for seamless auth
 2. **Playlist Management**: 
    - View user's Spotify playlists
-   - Search for playlists by theme/keywords
    - Mock data fallback for testing
 3. **Game Mechanics**:
    - 10 rounds per game
