@@ -2,6 +2,29 @@
 
 This guide walks you through deploying your Spotify Trivia app to Azure App Service - a simple, cost-effective alternative to Kubernetes.
 
+## Quick Start (Using Provided Scripts)
+
+If you've already created your Azure resources, use these scripts for quick deployment:
+
+```bash
+# 1. Start the web app (if stopped)
+az webapp start --name guess-that-track-app --resource-group spotify-trivia-rg
+
+# 2. Clear any bad startup command
+az webapp config set --name guess-that-track-app --resource-group spotify-trivia-rg --startup-file ""
+
+# 3. Run the environment setup script (first time only)
+./azure-setup-env.sh
+
+# 4. Deploy using the deployment script
+./azure-deploy.sh
+```
+
+**Important:** Your `static-build` folder must exist before deploying. If it doesn't:
+```bash
+npx expo export -p web --output-dir static-build
+```
+
 ## Prerequisites
 
 - [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli) installed
@@ -89,16 +112,24 @@ openssl rand -base64 32
 node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 ```
 
-## Step 4: Configure Startup Command
+## Step 4: Configure Startup Command (Optional - Usually Not Needed)
 
-Tell Azure how to start your app:
+Azure App Service automatically runs `npm install --production` before starting your app. You typically **don't need** to set a custom startup command.
+
+**Only if needed**, you can customize the startup:
 
 ```bash
+# Let Azure use the default (recommended)
+# This automatically runs: npm install --production && npm start (or node server.js)
+
+# OR, if you need custom startup logic:
 az webapp config set \
   --name $APP_NAME \
   --resource-group $RESOURCE_GROUP \
-  --startup-file "npm install --production && node server.js"
+  --startup-file "node server.js"
 ```
+
+**Important:** Do NOT include `npm install` in the startup command - it runs automatically and will cause the app to timeout if run twice.
 
 ## Step 5: Build Your Web Application
 
@@ -315,6 +346,56 @@ az webapp config ssl bind \
 
 ## Troubleshooting
 
+### Error: Web App is Stopped (403)
+
+If you get a 403 error saying "This web app is stopped":
+
+```bash
+# Start the web app
+az webapp start --name $APP_NAME --resource-group $RESOURCE_GROUP
+
+# Verify it's running
+az webapp show --name $APP_NAME --resource-group $RESOURCE_GROUP --query state
+```
+
+### Error: Site Failed to Start Within 10 Minutes
+
+This usually means the app crashed during startup. Check the logs:
+
+```bash
+# View real-time logs
+az webapp log tail --name $APP_NAME --resource-group $RESOURCE_GROUP
+
+# Or view deployment logs in browser
+# https://<app-name>.scm.azurewebsites.net/api/logs/docker
+```
+
+**Common causes:**
+1. **Missing static-build folder** - Verify your deploy.zip includes it:
+   ```bash
+   unzip -l deploy.zip | grep static-build
+   ```
+   If empty, rebuild before deploying:
+   ```bash
+   npx expo export -p web --output-dir static-build
+   ```
+
+2. **Wrong startup command** - Should NOT run `npm install` in the startup command (it runs automatically):
+   ```bash
+   # Remove startup command to use default
+   az webapp config set --name $APP_NAME --resource-group $RESOURCE_GROUP --startup-file ""
+   ```
+
+3. **Missing environment variables** - Check they're all set:
+   ```bash
+   az webapp config appsettings list --name $APP_NAME --resource-group $RESOURCE_GROUP
+   ```
+
+4. **Port binding issues** - Ensure server.js binds to `0.0.0.0`, not `localhost`:
+   ```javascript
+   app.listen(PORT, '0.0.0.0', () => { ... });
+   ```
+
 ### App Won't Start
 
 Check logs:
@@ -326,6 +407,7 @@ Common issues:
 - Missing environment variables
 - Wrong Node.js version
 - Missing static-build folder
+- Server not binding to 0.0.0.0
 
 ### OAuth Redirect Error
 
