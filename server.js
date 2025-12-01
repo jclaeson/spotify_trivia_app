@@ -161,7 +161,7 @@ if (isDevelopment) {
   }
 }
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Backend server running on port ${PORT}`);
   console.log(`Mode: ${isDevelopment ? 'Development' : 'Production'}`);
   console.log(`Spotify OAuth proxy endpoints ready:`);

@@ -1,0 +1,226 @@
+Site failed to startup after 24.7383553sec. Container logs :
+Container name = 'guess-that-track-app' , Logs = _____
+/ _ \ _________* _________ ____
+/ /_\ \\___ / | \_ __ \_/ __ \
+/ | \/ /| | /| | \/\ ___/
+\____|__ /_____ \____/ |__| \___ >
+\/ \/ \/
+A P P S E R V I C E O N L I N U X
+
+Documenta* : http://ak*
+NodeJS quickstar* https://a*
+NodeJS Version : v20.19.5
+Instance Name : 10-30-1-1*
+Instance Id : e3e9ae78e*
+
+Note: Any data outside '/home' is not persisted
+Starting OpenBSD Secure Shell server: sshd.
+WEBSITES_* is not set to true.
+Updating certifica* in /etc/ssl/*
+rehash: warning: skipping duplicate certifica* in azl_SSL.c*
+rehash: warning: skipping duplicate certifica* in azl_SSL.c*
+rehash: warning: skipping ca-certif* does not contain exactly one certifica* or CRL
+4 added, 0 removed; done.
+Running hooks in /etc/ca-c*
+done.
+CA certifica* copied and updated successfu*
+Starting periodic command scheduler* cron.
+Could not find build manifest file at '/home/si*
+Could not find operation ID in manifest. Generatin* an operation id...
+Build Operation ID: 3855fc08-*
+Environme* Variables for Applicati* Insight's IPA Codeless Configura* exists..
+Writing output script to '/opt/sta*
+Running #!/bin/sh
+
+# Enter the source directory to make sure the script runs where the user expects
+cd "/home/si*
+
+export NODE_PATH*
+if [ -z "$PORT" ]; then
+		export PORT=8080
+fi
+
+PATH="$PA* npm install --product* && node server.js
+npm info using n******@10.9.*
+npm info using n******@v20.*
+npm warn config productio* Use `--omit=d* instead.
+npm http fetch GET 200 https://r* 933ms
+npm http fetch POST 200 https://r* 2206ms
+npm http cache zod@https* 0ms (cache hit)
+npm http cache yocto-que* 0ms (cache hit)
+npm http cache zod-to-js* 0ms (cache hit)
+npm http cache yaml@http* 0ms (cache hit)
+npm http cache y18n@http* 0ms (cache hit)
+npm http cache xmlbuilde* 0ms (cache hit)
+npm http cache xcode@htt* 0ms (cache hit)
+npm http cache yargs-par* 0ms (cache hit)
+npm http cache write-fil* 0ms (cache hit)
+npm http cache wonka@htt* 0ms (cache hit)
+npm http cache which@htt* 0ms (cache hit)
+npm http cache ws@https:* 0ms (cache hit)
+npm http cache yallist@h* 0ms (cache hit)
+npm http cache whatwg-ur* 0ms (cache hit)
+npm http cache whatwg-ur* 0ms (cache hit)
+npm http cache webidl-co* 0ms (cache hit)
+npm http cache wrap-ansi* 0ms (cache hit)
+npm http cache wcwidth@h* 0ms (cache hit)
+npm http cache vaul@http* 0ms (cache hit)
+npm http cache walker@ht* 0ms (cache hit)
+npm http cache vlq@https* 0ms (cache hit)
+npm http cache validate-* 0ms (cache hit)
+npm http cache uuid@http* 0ms (cache hit)
+npm http cache wrappy@ht* 0ms (cache hit)
+npm http cache use-sync-* 0ms (cache hit)
+npm http cache whatwg-fe* 0ms (cache hit)
+npm http cache utils-mer* 0ms (cache hit)
+npm http cache warn-once* 0ms (cache hit)
+npm http cache use-callb* 0ms (cache hit)
+npm http cache unpipe@ht* 0ms (cache hit)
+npm http cache update-br* 0ms (cache hit)
+npm http cache vary@http* 0ms (cache hit)
+npm http cache unique-st* 0ms (cache hit)
+npm http cache unicode-m* 0ms (cache hit)
+npm http cache use-lates* 0ms (cache hit)
+npm http cache undici-ty* 0ms (cache hit)
+npm http cache use-sidec* 0ms (cache hit)
+npm http cache ua-parser* 0ms (cache hit)
+npm http cache type-is@h* 0ms (cache hit)
+npm http cache unicode-p* 0ms (cache hit)
+npm http cache type-fest* 0ms (cache hit)
+npm http cache tslib@htt* 0ms (cache hit)
+npm http cache type-dete* 0ms (cache hit)
+npm http cache tr46@http* 0ms (cache hit)
+npm http cache unicode-m* 0ms (cache hit)
+npm http cache toidentif* 0ms (cache hit)
+npm http cache undici@ht* 0ms (cache hit)
+npm http cache throat@ht* 0ms (cache hit)
+npm http cache tmpl@http* 0ms (cache hit)
+npm http cache unicode-c* 0ms (cache hit)
+npm http cache thenify@h* 0ms (cache hit)
+npm http cache test-excl* 0ms (cache hit)
+npm http cache terser@ht* 0ms (cache hit)
+npm http cache terminal-* 0ms (cache hit)
+npm http cache tar@https* 0ms (cache hit)
+npm http cache temp-dir@* 0ms (cache hit)
+npm http cache supports-* 0ms (cache hit)
+npm http cache ts-interf* 0ms (cache hit)
+npm http cache sucrase@h* 0ms (cache hit)
+npm http cache supports-* 0ms (cache hit)
+npm http cache to-regex-* 0ms (cache hit)
+npm http cache structure* 0ms (cache hit)
+npm http cache thenify-a* 0ms (cache hit)
+npm http cache string-wi*
+=======[LONG LOG TRUNCATED BY DETECTOR]======
+Site failed to startup after 24.7383553sec. Container logs :
+Container name = 'guess-that-track-app' , Logs = _____
+/ _ \ _________* _________ ____
+/ /_\ \\___ / | \_ __ \_/ __ \
+/ | \/ /| | /| | \/\ ___/
+\____|__ /_____ \____/ |__| \___ >
+\/ \/ \/
+A P P S E R V I C E O N L I N U X
+
+Documenta* : http://ak*
+NodeJS quickstar* https://a*
+NodeJS Version : v20.19.5
+Instance Name : 10-30-1-1*
+Instance Id : e3e9ae78e*
+
+Note: Any data outside '/home' is not persisted
+Starting OpenBSD Secure Shell server: sshd.
+WEBSITES_* is not set to true.
+Updating certifica* in /etc/ssl/*
+rehash: warning: skipping duplicate certifica* in azl_SSL.c*
+rehash: warning: skipping duplicate certifica* in azl_SSL.c*
+rehash: warning: skipping ca-certif* does not contain exactly one certifica* or CRL
+4 added, 0 removed; done.
+Running hooks in /etc/ca-c*
+done.
+CA certifica* copied and updated successfu*
+Starting periodic command scheduler* cron.
+Could not find build manifest file at '/home/si*
+Could not find operation ID in manifest. Generatin* an operation id...
+Build Operation ID: 3855fc08-*
+Environme* Variables for Applicati* Insight's IPA Codeless Configura* exists..
+Writing output script to '/opt/sta*
+Running #!/bin/sh
+
+# Enter the source directory to make sure the script runs where the user expects
+cd "/home/si*
+
+export NODE_PATH*
+if [ -z "$PORT" ]; then
+		export PORT=8080
+fi
+
+PATH="$PA* npm install --product* && node server.js
+npm info using n******@10.9.*
+npm info using n******@v20.*
+npm warn config productio* Use `--omit=d* instead.
+npm http fetch GET 200 https://r* 933ms
+npm http fetch POST 200 https://r* 2206ms
+npm http cache zod@https* 0ms (cache hit)
+npm http cache yocto-que* 0ms (cache hit)
+npm http cache zod-to-js* 0ms (cache hit)
+npm http cache yaml@http* 0ms (cache hit)
+npm http cache y18n@http* 0ms (cache hit)
+npm http cache xmlbuilde* 0ms (cache hit)
+npm http cache xcode@htt* 0ms (cache hit)
+npm http cache yargs-par* 0ms (cache hit)
+npm http cache write-fil* 0ms (cache hit)
+npm http cache wonka@htt* 0ms (cache hit)
+npm http cache which@htt* 0ms (cache hit)
+npm http cache ws@https:* 0ms (cache hit)
+npm http cache yallist@h* 0ms (cache hit)
+npm http cache whatwg-ur* 0ms (cache hit)
+npm http cache whatwg-ur* 0ms (cache hit)
+npm http cache webidl-co* 0ms (cache hit)
+npm http cache wrap-ansi* 0ms (cache hit)
+npm http cache wcwidth@h* 0ms (cache hit)
+npm http cache vaul@http* 0ms (cache hit)
+npm http cache walker@ht* 0ms (cache hit)
+npm http cache vlq@https* 0ms (cache hit)
+npm http cache validate-* 0ms (cache hit)
+npm http cache uuid@http* 0ms (cache hit)
+npm http cache wrappy@ht* 0ms (cache hit)
+npm http cache use-sync-* 0ms (cache hit)
+npm http cache whatwg-fe* 0ms (cache hit)
+npm http cache utils-mer* 0ms (cache hit)
+npm http cache warn-once* 0ms (cache hit)
+npm http cache use-callb* 0ms (cache hit)
+npm http cache unpipe@ht* 0ms (cache hit)
+npm http cache update-br* 0ms (cache hit)
+npm http cache vary@http* 0ms (cache hit)
+npm http cache unique-st* 0ms (cache hit)
+npm http cache unicode-m* 0ms (cache hit)
+npm http cache use-lates* 0ms (cache hit)
+npm http cache undici-ty* 0ms (cache hit)
+npm http cache use-sidec* 0ms (cache hit)
+npm http cache ua-parser* 0ms (cache hit)
+npm http cache type-is@h* 0ms (cache hit)
+npm http cache unicode-p* 0ms (cache hit)
+npm http cache type-fest* 0ms (cache hit)
+npm http cache tslib@htt* 0ms (cache hit)
+npm http cache type-dete* 0ms (cache hit)
+npm http cache tr46@http* 0ms (cache hit)
+npm http cache unicode-m* 0ms (cache hit)
+npm http cache toidentif* 0ms (cache hit)
+npm http cache undici@ht* 0ms (cache hit)
+npm http cache throat@ht* 0ms (cache hit)
+npm http cache tmpl@http* 0ms (cache hit)
+npm http cache unicode-c* 0ms (cache hit)
+npm http cache thenify@h* 0ms (cache hit)
+npm http cache test-excl* 0ms (cache hit)
+npm http cache terser@ht* 0ms (cache hit)
+npm http cache terminal-* 0ms (cache hit)
+npm http cache tar@https* 0ms (cache hit)
+npm http cache temp-dir@* 0ms (cache hit)
+npm http cache supports-* 0ms (cache hit)
+npm http cache ts-interf* 0ms (cache hit)
+npm http cache sucrase@h* 0ms (cache hit)
+npm http cache supports-* 0ms (cache hit)
+npm http cache to-regex-* 0ms (cache hit)
+npm http cache structure* 0ms (cache hit)
+npm http cache thenify-a* 0ms (cache hit)
+npm http cache string-wi*
+=======[LONG LOG TRUNCATED BY DETECTOR]======
