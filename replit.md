@@ -4,7 +4,14 @@
 An interactive music trivia game built with Expo React Native that challenges users to identify songs from short audio previews. The app integrates with Spotify to fetch user playlists.
 
 ## Recent Changes
-- **November 19, 2024**: Created Kubernetes deployment infrastructure for Azure AKS
+- **December 1, 2024**: Created Azure App Service deployment (Simple & Cost-Effective Alternative)
+  - Built production-ready Expo web bundle (`static-build` folder)
+  - Created comprehensive deployment guide (AZURE_DEPLOY.md) for single-instance deployment
+  - Configured server.js to serve both API and static files in production mode
+  - Cost: ~$13/month (Basic B1 tier) vs $95+/month for Kubernetes
+  - Simple deployment: One command to deploy entire app
+  - Automatic HTTPS with custom domain support
+- **November 19, 2024**: Created Kubernetes deployment infrastructure for Azure AKS (Deprecated - Too Expensive)
   - Built complete containerization with Dockerfile.backend and Dockerfile.frontend
   - Created all Kubernetes manifests (deployments, services, ingress, configmap, secrets)
   - Added comprehensive deployment guide (k8s/DEPLOY.md) for AKS setup
@@ -12,6 +19,7 @@ An interactive music trivia game built with Expo React Native that challenges us
   - Configured environment-based CORS and redirect URIs for multi-environment support
   - Implemented semantic versioning for Docker images (v1.0.0)
   - Backend supports both monolithic (Replit) and microservice (K8s) architectures
+  - **Note**: Pivoted to simpler Azure App Service due to high cost ($100+ spent on infrastructure)
 - **November 19, 2024**: Removed playlist search functionality
   - Simplified GameSetupScreen to only show user's own playlists
   - Removed search bar and search-related code
@@ -142,7 +150,48 @@ On web, the app fetches real Spotify data via OAuth. On mobile (Expo Go), it use
   - Or use `bash start-dev.sh` to start both Expo and backend servers
 - Expo runs on port 8081, backend defaults to port 8080 (configurable via PORT env var)
 
-### Kubernetes Deployment
+### Azure App Service Deployment (Recommended)
+
+**Simple, cost-effective deployment for demos and small-scale production:**
+
+The app deploys as a single Azure App Service instance running Node.js 20:
+- **Express backend** handles Spotify OAuth (`/api`, `/callback`)
+- **Static web files** serve the Expo web bundle (`/`)
+- **One domain** with automatic HTTPS
+- **Cost**: ~$13/month (Basic B1 tier)
+- **Always-on**: No cold starts, instant response
+
+**How it works:**
+1. server.js detects `NODE_ENV=production`
+2. Serves static files from `static-build/` directory
+3. Handles API routes at `/api/*` and OAuth callback at `/callback`
+4. Single deployment, single domain, simple configuration
+
+**Deployment Guide:** See `AZURE_DEPLOY.md` for step-by-step instructions
+
+**Key Benefits:**
+- 87% cheaper than Kubernetes (~$13/month vs ~$95/month)
+- Single command deployment
+- Built-in monitoring and logging
+- Easy environment variable management
+- Custom domain + SSL included
+- Perfect for demos, prototypes, and small user bases
+
+**Required Environment Variables:**
+- `NODE_ENV=production`
+- `PORT=8080`
+- `SPOTIFY_CLIENT_ID` - From Spotify Developer Dashboard
+- `SPOTIFY_CLIENT_SECRET` - From Spotify Developer Dashboard
+- `SESSION_SECRET` - Random 32-byte base64 string
+- `ALLOWED_ORIGINS` - Your app URL (e.g., `https://yourapp.azurewebsites.net`)
+- `ALLOWED_REDIRECT_URIS` - OAuth callback URL (e.g., `https://yourapp.azurewebsites.net/callback`)
+
+---
+
+### Kubernetes Deployment (Deprecated - Too Expensive)
+
+**Note:** The Kubernetes deployment was created as a learning exercise but proved too expensive for a demo app ($100+ infrastructure costs). Use Azure App Service instead for cost-effective hosting.
+
 The app is fully containerized and ready for deployment on Azure Kubernetes Service (AKS):
 
 **Architecture:**
@@ -168,6 +217,12 @@ The app is fully containerized and ready for deployment on Azure Kubernetes Serv
 - Resource limits and requests
 - Ingress routing: `/api` and `/callback` → backend, `/` → frontend
 - Cross-platform deployment scripts (macOS and Linux compatible)
+
+**Cost Reality:**
+- AKS cluster: ~$70+/month
+- Load balancers: ~$20/month
+- Container registry: ~$5/month
+- **Total**: ~$95+/month (vs $13/month for App Service)
 
 ### Known Limitations
 - Audio preview playback is simulated (no actual Spotify audio in prototype)
