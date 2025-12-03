@@ -132,6 +132,28 @@ app.use('/api', apiRouter);
 
 const staticBuildPath = path.join(__dirname, 'static-build');
 
+// Font MIME type middleware - ensures fonts load correctly in browsers
+app.use((req, res, next) => {
+  if (req.path.endsWith('.ttf')) {
+    res.setHeader('Content-Type', 'font/ttf');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
+  } else if (req.path.endsWith('.woff')) {
+    res.setHeader('Content-Type', 'font/woff');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cache-Control', 'public, max-age=31536000');
+  } else if (req.path.endsWith('.woff2')) {
+    res.setHeader('Content-Type', 'font/woff2');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cache-Control', 'public, max-age=31536000');
+  } else if (req.path.endsWith('.otf')) {
+    res.setHeader('Content-Type', 'font/otf');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cache-Control', 'public, max-age=31536000');
+  }
+  next();
+});
+
 if (fs.existsSync(staticBuildPath)) {
   console.log('Serving static files from static-build/');
   app.use(express.static(staticBuildPath));

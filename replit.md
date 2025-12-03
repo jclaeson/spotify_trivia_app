@@ -4,6 +4,11 @@
 An interactive music trivia game built with Expo React Native that challenges users to identify songs from short audio previews. The app integrates with Spotify to fetch user playlists.
 
 ## Recent Changes
+- **December 3, 2024**: Fixed icon font loading on Azure deployment
+  - Added font MIME type middleware to deploy/server.js
+  - Ensures .ttf, .woff, .woff2, and .otf files are served with correct Content-Type headers
+  - Added CORS headers for cross-origin font access
+  - Added 1-year cache headers for optimal performance
 - **December 3, 2024**: UI/UX Polish - Play/Stop Button & Album Artwork
   - Changed audio control button to show play icon when paused, stop icon (square) when playing
   - Reduced album artwork blur intensity from 80 to 40 for better visibility
