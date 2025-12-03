@@ -34,14 +34,27 @@ az webapp config appsettings set \
     ALLOWED_REDIRECT_URIS="https://guess-that-track-app.azurewebsites.net/callback"
 ```
 
-### 2. Deploy
+### 2. Enable HTTPS Only (REQUIRED)
+
+The Spotify login uses Web Crypto API which only works over HTTPS. You MUST enable HTTPS Only:
+
+```bash
+az webapp update \
+  --name guess-that-track-app \
+  --resource-group spotify-trivia-rg \
+  --https-only true
+```
+
+Or in Azure Portal: Settings → Configuration → General settings → Enable "HTTPS Only"
+
+### 3. Deploy
 
 ```bash
 cd deploy
 ./azure-deploy.sh
 ```
 
-### 3. Add Spotify Redirect URI
+### 4. Add Spotify Redirect URI
 
 In Spotify Developer Dashboard, add:
 ```

@@ -16,6 +16,14 @@ const ALLOWED_REDIRECT_URIS = process.env.ALLOWED_REDIRECT_URIS
 
 const app = express();
 
+app.use((req, res, next) => {
+  const proto = req.headers['x-forwarded-proto'];
+  if (proto && proto !== 'https') {
+    return res.redirect(301, `https://${req.headers.host}${req.url}`);
+  }
+  next();
+});
+
 app.use(cors({
   origin: ALLOWED_ORIGINS,
   credentials: true,
