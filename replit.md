@@ -5,10 +5,11 @@ An interactive music trivia game built with Expo React Native that challenges us
 
 ## Recent Changes
 - **December 3, 2024**: Fixed icon font loading on Azure deployment
-  - Added font MIME type middleware to deploy/server.js
-  - Ensures .ttf, .woff, .woff2, and .otf files are served with correct Content-Type headers
-  - Added CORS headers for cross-origin font access
-  - Added 1-year cache headers for optimal performance
+  - Root cause: express.static served fonts with Content-Type: text/html instead of font/ttf
+  - Solution: Configured express.static with setHeaders callback to set correct MIME types
+  - Fonts now served with proper Content-Type (font/ttf, font/woff, font/woff2, font/otf)
+  - Added CORS headers (Access-Control-Allow-Origin: *) for cross-origin font access
+  - Added 1-year cache headers (Cache-Control: public, max-age=31536000) for optimal performance
 - **December 3, 2024**: UI/UX Polish - Play/Stop Button & Album Artwork
   - Changed audio control button to show play icon when paused, stop icon (square) when playing
   - Reduced album artwork blur intensity from 80 to 40 for better visibility
