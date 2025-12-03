@@ -135,10 +135,10 @@ function PlaylistCard({
           <View
             style={[
               styles.iconContainer,
-              { backgroundColor: theme.backgroundSecondary },
+              { backgroundColor: theme.primary + "20" },
             ]}
           >
-            <Feather name="music" size={24} color={theme.primary} />
+            <Feather name="play" size={20} color={theme.primary} />
           </View>
           <View style={styles.playlistInfo}>
             <View style={styles.playlistTitleRow}>
@@ -165,7 +165,6 @@ function PlaylistCard({
               {playlist.trackCount} tracks
             </ThemedText>
           </View>
-          <Feather name="chevron-right" size={20} color={theme.textSecondary} />
         </View>
       </Card>
     </AnimatedPressable>

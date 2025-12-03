@@ -87,6 +87,7 @@ export async function getPlaylistTracks(playlistId: string) {
         name: item.track!.name,
         artist: item.track!.artists[0]?.name || 'Unknown Artist',
         previewUrl: item.track!.preview_url,
+        albumImageUrl: item.track!.album?.images?.[0]?.url,
       }));
   } catch (error) {
     console.error('Error fetching playlist tracks:', error);

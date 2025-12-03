@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
-import { StyleSheet, View, Pressable, Linking, Platform } from "react-native";
+import { StyleSheet, View, Pressable, Linking, Platform, Image } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { Audio } from "expo-av";
+import { BlurView } from "expo-blur";
+import * as Haptics from "expo-haptics";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
+  withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -39,6 +42,7 @@ interface GamePlayScreenProps {
   correctAnswerId: string;
   currentTrack: Track;
   onAnswerSelected: (answerId: string) => void;
+  onBackToMenu?: () => void;
 }
 
 export default function GamePlayScreen({
@@ -48,6 +52,7 @@ export default function GamePlayScreen({
   correctAnswerId,
   currentTrack,
   onAnswerSelected,
+  onBackToMenu,
 }: GamePlayScreenProps) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
@@ -58,6 +63,8 @@ export default function GamePlayScreen({
   const soundRef = useRef<Audio.Sound | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const playbackStartTimeRef = useRef<number>(0);
+  const imageOpacity = useSharedValue(0);
+  const progressWidth = useSharedValue((currentRound / QUESTION_COUNT) * 100);
 
   useEffect(() => {
     if (Platform.OS === 'web') {
@@ -71,9 +78,18 @@ export default function GamePlayScreen({
   }, []);
 
   useEffect(() => {
+    progressWidth.value = withSpring((currentRound / QUESTION_COUNT) * 100, {
+      damping: 15,
+      stiffness: 90,
+    });
+  }, [currentRound]);
+
+  useEffect(() => {
     setSelectedAnswer(null);
     setAudioPlaying(false);
     setAudioProgress(0);
+    imageOpacity.value = 0;
+    imageOpacity.value = withTiming(1, { duration: 500 });
     loadAudio();
     
     return () => {
@@ -228,6 +244,14 @@ export default function GamePlayScreen({
     }
   };
 
+  const progressAnimatedStyle = useAnimatedStyle(() => ({
+    width: `${progressWidth.value}%`,
+  }));
+
+  const albumAnimatedStyle = useAnimatedStyle(() => ({ 
+    opacity: imageOpacity.value 
+  }));
+
   return (
     <ThemedView
       style={[
@@ -249,27 +273,43 @@ export default function GamePlayScreen({
 
       <View style={styles.progressContainer}>
         <View style={[styles.progressBar, { backgroundColor: theme.backgroundDefault }]}>
-          <View
+          <Animated.View
             style={[
               styles.progressFill,
               {
                 backgroundColor: theme.primary,
-                width: `${(currentRound / QUESTION_COUNT) * 100}%`,
               },
+              progressAnimatedStyle,
             ]}
           />
         </View>
       </View>
 
       <View style={styles.albumContainer}>
-        <View
+        <Animated.View
           style={[
             styles.albumPlaceholder,
             { backgroundColor: theme.backgroundDefault },
+            albumAnimatedStyle,
           ]}
         >
-          <Feather name="music" size={64} color={theme.textSecondary} />
-        </View>
+          {currentTrack.albumImageUrl ? (
+            <>
+              <Image
+                source={{ uri: currentTrack.albumImageUrl }}
+                style={styles.albumImage}
+                resizeMode="cover"
+              />
+              <BlurView
+                intensity={80}
+                tint="dark"
+                style={StyleSheet.absoluteFill}
+              />
+            </>
+          ) : (
+            <Feather name="music" size={64} color={theme.textSecondary} />
+          )}
+        </Animated.View>
       </View>
 
       <View style={styles.playerContainer}>
@@ -317,14 +357,6 @@ export default function GamePlayScreen({
                 <ThemedText type="small" style={{ color: theme.textSecondary }}>
                   {Math.floor((audioProgress / 100) * (PREVIEW_DURATION_MS / 1000))}s / {PREVIEW_DURATION_MS / 1000}s
                 </ThemedText>
-                {currentTrack.id ? (
-                  <Pressable onPress={handleOpenInSpotify} style={styles.spotifyLink}>
-                    <Feather name="external-link" size={14} color={theme.primary} />
-                    <ThemedText type="small" style={{ color: theme.primary, fontSize: 12, marginLeft: 4 }}>
-                      Open in Spotify
-                    </ThemedText>
-                  </Pressable>
-                ) : null}
               </View>
             </>
           ) : (
@@ -333,6 +365,37 @@ export default function GamePlayScreen({
             </ThemedText>
           )}
         </View>
+      </View>
+
+      <View style={styles.actionBar}>
+        {onBackToMenu ? (
+          <Pressable
+            onPress={onBackToMenu}
+            style={[
+              styles.actionButton,
+              { backgroundColor: theme.backgroundSecondary },
+            ]}
+          >
+            <Feather name="arrow-left" size={18} color={theme.text} />
+            <ThemedText type="small" style={{ color: theme.text, marginLeft: Spacing.sm }}>
+              Back to Menu
+            </ThemedText>
+          </Pressable>
+        ) : null}
+        {currentTrack.id ? (
+          <Pressable
+            onPress={handleOpenInSpotify}
+            style={[
+              styles.actionButton,
+              { backgroundColor: theme.backgroundSecondary },
+            ]}
+          >
+            <Feather name="external-link" size={18} color={theme.primary} />
+            <ThemedText type="small" style={{ color: theme.primary, marginLeft: Spacing.sm }}>
+              Open in Spotify
+            </ThemedText>
+          </Pressable>
+        ) : null}
       </View>
 
       <View style={styles.answersContainer}>
@@ -369,6 +432,31 @@ function AnswerButton({
 }) {
   const { theme } = useTheme();
   const scale = useSharedValue(1);
+  const hasTriggeredHaptic = useRef(false);
+
+  useEffect(() => {
+    if (showResult && isSelected && !hasTriggeredHaptic.current) {
+      hasTriggeredHaptic.current = true;
+      if (Platform.OS !== 'web') {
+        if (isCorrect) {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        } else {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        }
+      }
+    }
+    
+    if (!showResult) {
+      hasTriggeredHaptic.current = false;
+    }
+  }, [showResult, isSelected, isCorrect]);
+
+  const handlePress = () => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    onPress();
+  };
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -390,7 +478,7 @@ function AnswerButton({
 
   return (
     <AnimatedPressable
-      onPress={onPress}
+      onPress={handlePress}
       onPressIn={() => (scale.value = withSpring(0.98))}
       onPressOut={() => (scale.value = withSpring(1))}
       disabled={showResult}
@@ -472,6 +560,14 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
+  },
+  albumImage: {
+    width: "100%",
+    height: "100%",
+    position: "absolute",
+    top: 0,
+    left: 0,
   },
   playerContainer: {
     flexDirection: "row",
@@ -508,11 +604,20 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  spotifyLink: {
+  actionBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: Spacing.md,
+    marginBottom: Spacing["3xl"],
+  },
+  actionButton: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 2,
+    justifyContent: "center",
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.md,
   },
   answersContainer: {
     flex: 1,

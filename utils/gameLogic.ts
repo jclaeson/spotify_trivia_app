@@ -7,6 +7,7 @@ export interface Track {
   name: string;
   artist: string;
   previewUrl: string | null;
+  albumImageUrl?: string;
 }
 
 export interface GameQuestion {
@@ -50,6 +51,7 @@ export async function loadTracksForPlaylist(playlistId: string, hasPremium: bool
           name: track.name,
           artist: track.artists[0]?.name || 'Unknown Artist',
           previewUrl: track.preview_url,
+          albumImageUrl: track.album?.images?.[0]?.url,
         }));
       } else {
         const playlistTracks = await getPlaylistTracks(playlistId);
@@ -58,6 +60,7 @@ export async function loadTracksForPlaylist(playlistId: string, hasPremium: bool
           name: track.name,
           artist: track.artist,
           previewUrl: track.previewUrl,
+          albumImageUrl: track.albumImageUrl,
         }));
       }
 

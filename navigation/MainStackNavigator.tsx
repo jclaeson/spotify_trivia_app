@@ -269,20 +269,10 @@ export default function MainStackNavigator() {
           </Stack.Screen>
           <Stack.Screen
             name="GamePlay"
-            options={({ navigation }) => ({
+            options={{
               title: "Playing",
               headerBackVisible: false,
-              headerLeft: () => (
-                <Pressable
-                  onPress={() => handleExitGame(navigation)}
-                  style={{ padding: Spacing.sm, marginLeft: Spacing.xs }}
-                >
-                  <ThemedText type="body" style={{ color: theme.primary }}>
-                    Exit
-                  </ThemedText>
-                </Pressable>
-              ),
-            })}
+            }}
           >
             {({ navigation }) => currentQuestion ? (
               <GamePlayScreen
@@ -306,6 +296,7 @@ export default function MainStackNavigator() {
                     }, 2500);
                   }
                 }}
+                onBackToMenu={() => handleExitGame(navigation)}
               />
             ) : null}
           </Stack.Screen>
