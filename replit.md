@@ -4,6 +4,11 @@
 An interactive music trivia game built with Expo React Native that challenges users to identify songs from short audio previews. The app integrates with Spotify to fetch user playlists.
 
 ## Recent Changes
+- **December 3, 2024**: Fixed Spotify OAuth login on Azure (crypto.subtle.digest error)
+  - Root cause: Web Crypto API only works over HTTPS (secure context)
+  - Added HTTPS redirect middleware to deploy/server.js
+  - Documented HTTPS Only requirement in deploy/README.md
+  - Deployment requires: `az webapp update --https-only true`
 - **December 1, 2024**: Created Azure App Service deployment (Simple & Cost-Effective Alternative)
   - Built production-ready Expo web bundle (`static-build` folder)
   - Created comprehensive deployment guide (AZURE_DEPLOY.md) for single-instance deployment
