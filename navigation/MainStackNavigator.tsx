@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { View, Image, StyleSheet, Platform } from "react-native";
+import { View, Image, StyleSheet, Platform, Pressable } from "react-native";
 
 import LoginScreen from "@/screens/LoginScreen";
 import MenuScreen from "@/screens/MenuScreen";
@@ -65,6 +65,9 @@ export default function MainStackNavigator() {
     results: [] as RoundResult[],
   });
 
+  const answerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const resultsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
     checkAuth();
   }, []);
@@ -98,6 +101,26 @@ export default function MainStackNavigator() {
 
   const handleLogout = () => {
     setIsAuthenticated(false);
+  };
+
+  const handleExitGame = (navigation: any) => {
+    if (answerTimeoutRef.current) {
+      clearTimeout(answerTimeoutRef.current);
+      answerTimeoutRef.current = null;
+    }
+    if (resultsTimeoutRef.current) {
+      clearTimeout(resultsTimeoutRef.current);
+      resultsTimeoutRef.current = null;
+    }
+    setCurrentQuestion(null);
+    setGameTracks([]);
+    setUsedTrackIds([]);
+    setGameState({
+      currentRound: 1,
+      score: 0,
+      results: [],
+    });
+    navigation.reset({ index: 0, routes: [{ name: "Menu" }] });
   };
 
   const handleStartGame = async (playlistId: string, navigation: any) => {
@@ -145,7 +168,11 @@ export default function MainStackNavigator() {
       },
     ];
 
-    setTimeout(() => {
+    if (answerTimeoutRef.current) {
+      clearTimeout(answerTimeoutRef.current);
+    }
+
+    answerTimeoutRef.current = setTimeout(() => {
       if (gameState.currentRound < QUESTION_COUNT) {
         const newUsedIds = [...usedTrackIds, currentQuestion.correctAnswerId];
         setUsedTrackIds(newUsedIds);
@@ -242,7 +269,20 @@ export default function MainStackNavigator() {
           </Stack.Screen>
           <Stack.Screen
             name="GamePlay"
-            options={{ title: "Playing", headerBackVisible: false }}
+            options={({ navigation }) => ({
+              title: "Playing",
+              headerBackVisible: false,
+              headerLeft: () => (
+                <Pressable
+                  onPress={() => handleExitGame(navigation)}
+                  style={{ padding: Spacing.sm, marginLeft: Spacing.xs }}
+                >
+                  <ThemedText type="body" style={{ color: theme.primary }}>
+                    Exit
+                  </ThemedText>
+                </Pressable>
+              ),
+            })}
           >
             {({ navigation }) => currentQuestion ? (
               <GamePlayScreen
@@ -258,7 +298,10 @@ export default function MainStackNavigator() {
                 onAnswerSelected={(answerId) => {
                   handleAnswerSelected(answerId);
                   if (gameState.currentRound >= QUESTION_COUNT) {
-                    setTimeout(() => {
+                    if (resultsTimeoutRef.current) {
+                      clearTimeout(resultsTimeoutRef.current);
+                    }
+                    resultsTimeoutRef.current = setTimeout(() => {
                       navigation.replace("Results");
                     }, 2500);
                   }
