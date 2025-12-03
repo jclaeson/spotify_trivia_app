@@ -301,7 +301,7 @@ export default function GamePlayScreen({
                 resizeMode="cover"
               />
               <BlurView
-                intensity={80}
+                intensity={40}
                 tint="dark"
                 style={StyleSheet.absoluteFill}
               />
@@ -325,7 +325,7 @@ export default function GamePlayScreen({
           disabled={!hasPremium && (!currentTrack.previewUrl || currentTrack.previewUrl === 'mock')}
         >
           <Feather
-            name={audioPlaying ? "pause" : "play"}
+            name={audioPlaying ? "square" : "play"}
             size={32}
             color={(hasPremium || (currentTrack.previewUrl && currentTrack.previewUrl !== 'mock')) ? "#FFFFFF" : theme.textSecondary}
           />
