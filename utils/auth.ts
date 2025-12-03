@@ -136,7 +136,7 @@ export async function handleSpotifyCallback(): Promise<boolean> {
     
     window.localStorage.removeItem('spotify_code_verifier');
     
-    window.history.replaceState({}, document.title, '/');
+    window.location.href = '/';
     
     return true;
   } catch (error) {
