@@ -1,0 +1,103 @@
+2025-12-03T15:57:19.1898801Z    _____
+2025-12-03T15:57:19.1899094Z   /  _  \ __________ _________   ____
+2025-12-03T15:57:19.189912Z  /  /_\  \\___   /  |  \_  __ \_/ __ \
+2025-12-03T15:57:19.1899136Z /    |    \/    /|  |  /|  | \/\  ___/
+2025-12-03T15:57:19.1899154Z \____|__  /_____ \____/ |__|    \___  >
+2025-12-03T15:57:19.1899171Z         \/      \/                  \/
+2025-12-03T15:57:19.1899185Z A P P   S E R V I C E   O N   L I N U X
+2025-12-03T15:57:19.1899199Z
+2025-12-03T15:57:19.1899215Z Documentation    : http://aka.ms/webapp-linux
+2025-12-03T15:57:19.1899229Z NodeJS quickstart: https://aka.ms/node-qs
+2025-12-03T15:57:19.1899295Z NodeJS Version   : v20.19.5
+2025-12-03T15:57:19.189931Z Instance Name    : lw0sdlwk00089V
+2025-12-03T15:57:19.1899329Z Instance Id      : 60f895e9258586008b1a77135f5c4c83e9d52d0d1381d861ff166b228fdada46
+2025-12-03T15:57:19.1899341Z
+2025-12-03T15:57:19.1899357Z Note: Any data outside '/home' is not persisted
+2025-12-03T15:57:27.4359528Z Starting OpenBSD Secure Shell server: sshd.
+2025-12-03T15:57:27.5270332Z WEBSITES_INCLUDE_CLOUD_CERTS is not set to true.
+2025-12-03T15:57:27.7162989Z Updating certificates in /etc/ssl/certs...
+2025-12-03T15:57:54.0190367Z rehash: warning: skipping duplicate certificate in azl_SSL.com_TLS_ECC_Root_CA_2022.pem
+2025-12-03T15:57:54.0282699Z rehash: warning: skipping duplicate certificate in azl_SSL.com_TLS_RSA_Root_CA_2022.pem
+2025-12-03T15:57:54.8442674Z rehash: warning: skipping ca-certificates.crt,it does not contain exactly one certificate or CRL
+2025-12-03T15:57:55.06801Z 4 added, 0 removed; done.
+2025-12-03T15:57:55.1395458Z Running hooks in /etc/ca-certificates/update.d...
+2025-12-03T15:57:55.1476707Z done.
+2025-12-03T15:57:55.2084Z CA certificates copied and updated successfully.
+2025-12-03T15:57:55.7411288Z Starting periodic command scheduler: cron.
+2025-12-03T15:57:56.7095284Z Could not find build manifest file at '/home/site/wwwroot/oryx-manifest.toml'
+2025-12-03T15:57:56.7095829Z Could not find operation ID in manifest. Generating an operation id...
+2025-12-03T15:57:56.7095854Z Build Operation ID: 715b01cc-2451-4bb6-8580-b30ca9209461
+2025-12-03T15:57:57.7560888Z Environment Variables for Application Insight's IPA Codeless Configuration exists..
+2025-12-03T15:57:57.8345622Z Writing output script to '/opt/startup/startup.sh'
+2025-12-03T15:57:57.9450381Z Running #!/bin/sh
+2025-12-03T15:57:57.94509Z
+2025-12-03T15:57:57.9450927Z # Enter the source directory to make sure the script runs where the user expects
+2025-12-03T15:57:57.9450943Z cd "/home/site/wwwroot"
+2025-12-03T15:57:57.9450956Z
+2025-12-03T15:57:57.9450972Z export NODE_PATH=/usr/local/lib/node_modules:$NODE_PATH
+2025-12-03T15:57:57.9450986Z if [ -z "$PORT" ]; then
+2025-12-03T15:57:57.9451004Z 		export PORT=8080
+2025-12-03T15:57:57.9451019Z fi
+2025-12-03T15:57:57.9451105Z
+2025-12-03T15:57:57.9460799Z PATH="$PATH:/home/site/wwwroot" npm install --production && node server.js
+2025-12-03T15:58:04.0939224Z npm info using npm@10.9.2
+2025-12-03T15:58:04.1319187Z npm info using node@v20.19.5
+2025-12-03T15:58:04.1522412Z npm warn config production Use `--omit=dev` instead.
+2025-12-03T15:58:13.1856634Z npm http fetch GET 200 https://registry.npmjs.org/npm 2130ms
+2025-12-03T15:58:15.8018514Z npm http fetch GET 200 https://registry.npmjs.org/express 402ms (cache miss)
+2025-12-03T15:58:16.0252707Z npm http fetch GET 200 https://registry.npmjs.org/array-flatten 51ms (cache miss)
+2025-12-03T15:58:16.105958Z npm http fetch GET 200 https://registry.npmjs.org/body-parser 71ms (cache miss)
+2025-12-03T15:58:21.5783879Z npm http fetch GET 200 https://registry.npmjs.org/content-disposition 5461ms (cache miss)
+2025-12-03T15:58:22.5065809Z npm http fetch GET 200 https://registry.npmjs.org/content-type 73ms (cache miss)
+2025-12-03T15:58:22.5066061Z npm http fetch GET 200 https://registry.npmjs.org/cookie-signature 61ms (cache miss)
+2025-12-03T15:58:22.5066089Z npm http fetch GET 200 https://registry.npmjs.org/debug 129ms (cache revalidated)
+2025-12-03T15:58:22.506619Z npm http fetch GET 200 https://registry.npmjs.org/encodeurl 90ms (cache miss)
+2025-12-03T15:58:22.5066211Z npm http fetch GET 200 https://registry.npmjs.org/finalhandler 43ms (cache miss)
+2025-12-03T15:58:22.5066231Z npm http fetch GET 200 https://registry.npmjs.org/merge-descriptors 55ms (cache miss)
+2025-12-03T15:58:22.506625Z npm http fetch GET 200 https://registry.npmjs.org/methods 52ms (cache miss)
+2025-12-03T15:58:22.506627Z npm http fetch GET 200 https://registry.npmjs.org/on-finished 43ms (cache miss)
+2025-12-03T15:58:22.5066289Z npm http fetch GET 200 https://registry.npmjs.org/path-to-regexp 60ms (cache miss)
+2025-12-03T15:58:22.5066308Z npm http fetch GET 200 https://registry.npmjs.org/qs 62ms (cache miss)
+2025-12-03T15:58:22.5066327Z npm http fetch GET 200 https://registry.npmjs.org/statuses 74ms (cache miss)
+2025-12-03T15:58:22.5266626Z npm http fetch GET 200 https://registry.npmjs.org/type-is 74ms (cache miss)
+2025-12-03T15:58:22.7399417Z npm http cache https://registry.npmjs.org/content-type 19ms (cache hit)
+2025-12-03T15:58:22.8782696Z npm http fetch GET 200 https://registry.npmjs.org/http-errors 91ms (cache miss)
+2025-12-03T15:58:22.929801Z npm http fetch GET 200 https://registry.npmjs.org/iconv-lite 59ms (cache revalidated)
+2025-12-03T15:58:23.0214332Z npm http fetch GET 200 https://registry.npmjs.org/raw-body 72ms (cache miss)
+2025-12-03T15:58:23.1132767Z npm http fetch GET 200 https://registry.npmjs.org/ms 79ms (cache revalidated)
+2025-12-03T15:58:23.1326132Z npm http cache https://registry.npmjs.org/statuses 3ms (cache hit)
+2025-12-03T15:58:23.1853314Z npm http fetch GET 200 https://registry.npmjs.org/media-typer 51ms (cache miss)
+2025-12-03T15:58:23.3081415Z npm http fetch GET 200 https://registry.npmjs.org/safer-buffer 83ms (cache revalidated)
+2025-12-03T15:58:33.8917096Z npm error code EACCES
+2025-12-03T15:58:33.8917551Z npm error syscall rename
+2025-12-03T15:58:33.8917577Z npm error path /home/site/wwwroot/node_modules/babel-plugin-module-resolver
+2025-12-03T15:58:33.8917595Z npm error dest /home/site/wwwroot/node_modules/.babel-plugin-module-resolver-CiN3wGUj
+2025-12-03T15:58:33.8917609Z npm error errno -13
+2025-12-03T15:58:33.9221675Z npm error Error: EACCES: permission denied, rename '/home/site/wwwroot/node_modules/babel-plugin-module-resolver' -> '/home/site/wwwroot/node_modules/.babel-plugin-module-resolver-CiN3wGUj'
+2025-12-03T15:58:33.9222185Z npm error     at async Object.rename (node:internal/fs/promises:782:10)
+2025-12-03T15:58:33.9222219Z npm error     at async moveFile (/usr/local/lib/node_modules/npm/node_modules/@npmcli/fs/lib/move-file.js:30:5)
+2025-12-03T15:58:33.9222235Z npm error     at async Promise.allSettled (index 12)
+2025-12-03T15:58:33.9222254Z npm error     at async [reifyPackages] (/usr/local/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/reify.js:325:11)
+2025-12-03T15:58:33.9222334Z npm error     at async Arborist.reify (/usr/local/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/reify.js:142:5)
+2025-12-03T15:58:33.9222353Z npm error     at async Install.exec (/usr/local/lib/node_modules/npm/lib/commands/install.js:150:5)
+2025-12-03T15:58:33.922237Z npm error     at async Npm.exec (/usr/local/lib/node_modules/npm/lib/npm.js:207:9)
+2025-12-03T15:58:33.9222388Z npm error     at async module.exports (/usr/local/lib/node_modules/npm/lib/cli/entry.js:74:5) {
+2025-12-03T15:58:33.9222403Z npm error   errno: -13,
+2025-12-03T15:58:33.9222418Z npm error   code: 'EACCES',
+2025-12-03T15:58:33.9222432Z npm error   syscall: 'rename',
+2025-12-03T15:58:33.9222449Z npm error   path: '/home/site/wwwroot/node_modules/babel-plugin-module-resolver',
+2025-12-03T15:58:33.9222466Z npm error   dest: '/home/site/wwwroot/node_modules/.babel-plugin-module-resolver-CiN3wGUj'
+2025-12-03T15:58:33.922248Z npm error }
+2025-12-03T15:58:33.9222509Z npm error
+2025-12-03T15:58:33.9222527Z npm error The operation was rejected by your operating system.
+2025-12-03T15:58:33.9222545Z npm error It is likely you do not have the permissions to access this file as the current user
+2025-12-03T15:58:33.9222559Z npm error
+2025-12-03T15:58:33.9222576Z npm error If you believe this might be a permissions issue, please double-check the
+2025-12-03T15:58:33.9222592Z npm error permissions of the file and its containing directories, or try running
+2025-12-03T15:58:33.9222607Z npm error the command again as root/Administrator.
+2025-12-03T15:58:33.9321458Z npm notice
+2025-12-03T15:58:33.9321849Z npm notice New major version of npm available! 10.9.2 -> 11.6.4
+2025-12-03T15:58:33.9321879Z npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.6.4
+2025-12-03T15:58:33.9321895Z npm notice To update run: npm install -g npm@11.6.4
+2025-12-03T15:58:33.9321967Z npm notice
+2025-12-03T15:58:33.9321987Z npm error A complete log of this run can be found in: /root/.npm/_logs/2025-12-03T15_58_02_765Z-debug-0.log
